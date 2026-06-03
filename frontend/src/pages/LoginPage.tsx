@@ -34,17 +34,42 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f2f5' }}>
-      <Card title="代理商软件管理系统" style={{ width: 400 }}>
-        <Form name="login" onFinish={onFinish}>
-          <Form.Item name="username" rules={[{ required: true, message: '请输入用户名' }]}>
-            <Input prefix={<UserOutlined />} placeholder="用户名" size="large" />
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f0f2f5', padding: '16px' }}>
+      <Card 
+        title="代理商软件管理系统" 
+        style={{ 
+          width: '100%', 
+          maxWidth: 400,
+          minWidth: 280,
+          padding: '16px',
+        }}
+        styles={{ body: { padding: '24px 16px' } }}
+      >
+        <Form name="login" onFinish={onFinish} layout="vertical">
+          <Form.Item 
+            name="username" 
+            rules={[{ required: true, message: '请输入用户名' }]}
+            label="用户名"
+          >
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="请输入用户名" 
+              size="large" 
+            />
           </Form.Item>
-          <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
-            <Input.Password prefix={<LockOutlined />} placeholder="密码" size="large" />
+          <Form.Item 
+            name="password" 
+            rules={[{ required: true, message: '请输入密码' }]}
+            label="密码"
+          >
+            <Input.Password 
+              prefix={<LockOutlined />} 
+              placeholder="请输入密码" 
+              size="large" 
+            />
           </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" style={{ width: '100%' }} size="large">
+          <Form.Item style={{ marginTop: 24 }}>
+            <Button type="primary" htmlType="submit" style={{ width: '100%', height: 44, fontSize: 16 }}>
               登录
             </Button>
           </Form.Item>

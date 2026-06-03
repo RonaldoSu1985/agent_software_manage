@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Layout, Menu, Button, theme } from 'antd';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Layout, Menu, Button, theme, Drawer } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -12,6 +12,7 @@ import {
   SwapOutlined,
   UserOutlined,
   LockOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 
@@ -19,11 +20,26 @@ const { Header, Sider, Content } = Layout;
 
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  // 检测是否为移动端
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) {
+        setCollapsed(true);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -107,54 +123,95 @@ const MainLayout: React.FC = () => {
     });
   }, [userPermissions]);
 
+  const handleMenuClick = (key: string) => {
+    if (key !== location.pathname) {
+      navigate(key);
+    }
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider trigger={null} collapsible collapsed={collapsed}>
-        <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', color: 'white', textAlign: 'center', lineHeight: '32px', fontWeight: 'bold' }}>
-          {collapsed ? 'AMS' : '软件管理系统'}
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={filteredMenuItems}
-          onClick={({ key }) => {
-            if (key !== location.pathname) {
-              navigate(key);
-            }
-          }}
-        />
-      </Sider>
+      {!isMobile && (
+        <Sider trigger={null} collapsible collapsed={collapsed} style={{ minWidth: collapsed ? 80 : 200 }}>
+          <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', color: 'white', textAlign: 'center', lineHeight: '32px', fontWeight: 'bold', fontSize: collapsed ? 14 : 16 }}>
+            {collapsed ? 'AMS' : '软件管理系统'}
+          </div>
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            items={filteredMenuItems}
+            onClick={({ key }) => handleMenuClick(key)}
+          />
+        </Sider>
+      )}
       <Layout>
         <Header style={{ padding: 0, background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-            style={{ fontSize: '16px', width: 64, height: 64 }}
-          />
-          <Button
-            type="text"
-            icon={<LogoutOutlined />}
-            onClick={handleLogout}
-            style={{ marginRight: 16 }}
-          >
-            退出登录
-          </Button>
+          {!isMobile ? (
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+              style={{ fontSize: '16px', width: 64, height: 64 }}
+            />
+          ) : (
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={() => setMobileMenuOpen(true)}
+              style={{ fontSize: '16px', width: 64, height: 64 }}
+            />
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: isMobile ? 12 : 16 }}>
+            <span style={{ display: !isMobile ? 'block' : 'none', fontSize: 14 }}>
+              {localStorage.getItem('username')}
+            </span>
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              onClick={handleLogout}
+              style={{ padding: isMobile ? 4 : undefined }}
+            >
+              {isMobile ? null : '退出'}
+            </Button>
+          </div>
         </Header>
         <Content
           style={{
-            margin: '24px 16px',
-            padding: 24,
+            margin: isMobile ? '12px 8px' : '24px 16px',
+            padding: isMobile ? 12 : 24,
             minHeight: 280,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
-            overflow: 'auto'
+            overflow: 'auto',
+            fontSize: isMobile ? 14 : 16,
           }}
         >
           <Outlet />
         </Content>
       </Layout>
+
+      {/* 移动端菜单抽屉 */}
+      <Drawer
+        title="软件管理系统"
+        placement="left"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        width={260}
+        bodyStyle={{ padding: 0 }}
+      >
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          items={filteredMenuItems}
+          onClick={({ key }) => handleMenuClick(key)}
+          style={{ height: '100%', borderRight: 0 }}
+        />
+      </Drawer>
     </Layout>
   );
 };

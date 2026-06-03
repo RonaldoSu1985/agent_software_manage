@@ -1,0 +1,101 @@
+/* 移动端响应式样式 */
+@media (max-width: 768px) {
+  /* 表格容器横向滚动 */
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 表格字体缩小 */
+  .ant-table {
+    font-size: 12px;
+  }
+
+  /* 表格单元格内边距缩小 */
+  .ant-table-tbody > tr > td,
+  .ant-table-thead > tr > th {
+    padding: 8px 4px !important;
+  }
+
+  /* 表格头部背景色加深便于区分 */
+  .ant-table-thead > tr > th {
+    background-color: #f0f0f0;
+    font-weight: 600;
+  }
+
+  /* 表单标签缩小 */
+  .ant-form-item-label {
+    font-size: 12px;
+    padding-bottom: 4px;
+  }
+
+  /* 表单控件缩小 */
+  .ant-input,
+  .ant-select-selector,
+  .ant-picker {
+    font-size: 12px !important;
+    height: 32px !important;
+  }
+
+  /* 按钮缩小 */
+  .ant-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    height: 32px;
+  }
+
+  /* 按钮组间距缩小 */
+  .ant-space {
+    gap: 4px !important;
+  }
+
+  /* 模态框宽度适应屏幕 */
+  .ant-modal {
+    width: 95% !important;
+    max-width: 95% !important;
+  }
+
+  /* 模态框内容字体缩小 */
+  .ant-modal-body {
+    font-size: 13px;
+  }
+
+  /* 表单行在移动端垂直排列 */
+  .ant-form-item {
+    margin-bottom: 12px;
+  }
+
+  /* 日期选择器在移动端更紧凑 */
+  .ant-picker-range {
+    width: 100% !important;
+  }
+
+  /* 标签字体缩小 */
+  .ant-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* 输入框占位符字体缩小 */
+  .ant-input::placeholder {
+    font-size: 11px;
+  }
+}
+
+/* 小屏幕优化 */
+@media (max-width: 480px) {
+  .ant-table {
+    font-size: 11px;
+  }
+
+  .ant-table-tbody > tr > td,
+  .ant-table-thead > tr > th {
+    padding: 6px 3px !important;
+  }
+
+  .ant-btn {
+    font-size: 11px;
+    padding: 3px 6px;
+    height: 28px;
+  }
+}
