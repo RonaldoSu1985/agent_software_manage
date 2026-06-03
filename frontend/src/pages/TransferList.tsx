@@ -94,8 +94,58 @@ const TransferList: React.FC = () => {
     fetchData();
   };
 
-  const handleExport = () => {
-    message.info('导出功能开发中');
+  const handleExport = async () => {
+    try {
+      const values = form.getFieldsValue();
+      const params: any = {};
+      
+      if (values.from_system_type) params.from_system_type = values.from_system_type;
+      if (values.from_agent_code) params.from_agent_code = values.from_agent_code;
+      if (values.from_agent_name) params.from_agent_name = values.from_agent_name;
+      if (values.to_system_type) params.to_system_type = values.to_system_type;
+      if (values.to_agent_code) params.to_agent_code = values.to_agent_code;
+      if (values.to_agent_name) params.to_agent_name = values.to_agent_name;
+      if (values.software_name) params.software_name = values.software_name;
+      if (values.date_range && values.date_range.length === 2) {
+        params.start_date = values.date_range[0].format('YYYY-MM-DD');
+        params.end_date = values.date_range[1].format('YYYY-MM-DD');
+      }
+      if (values.operator) params.operator = values.operator;
+      
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value);
+        }
+      });
+      
+      const token = localStorage.getItem('token');
+      const url = `http://localhost:8000/api/v1/inventory/logs/export/transfer?${queryParams.toString()}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('导出失败');
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `划拨记录_${dayjs().format('YYYYMMDDHHmmss')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      message.success('导出成功');
+    } catch (error) {
+      message.error('导出失败');
+    }
   };
 
   const handleAdd = async (values: any) => {
@@ -189,7 +239,7 @@ const TransferList: React.FC = () => {
           <Space>
             <Button type="primary" htmlType="submit">查询</Button>
             <Button onClick={handleReset}>重置</Button>
-            <Button icon={<DownloadOutlined />} onClick={handleExport}>导出</Button>
+            <Button icon={<DownloadOutlined />} htmlType="button" onClick={handleExport}>导出</Button>
             <Button type="primary" onClick={handleShowModal}>新增划拨</Button>
           </Space>
         </Form.Item>

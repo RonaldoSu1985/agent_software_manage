@@ -18,6 +18,10 @@ const LoginPage: React.FC = () => {
       
       if (token) {
         localStorage.setItem('token', token);
+        // 保存用户信息和权限
+        localStorage.setItem('username', response.data.username || '');
+        localStorage.setItem('role_name', response.data.role_name || '');
+        localStorage.setItem('permissions', JSON.stringify(response.data.permissions || []));
         message.success('登录成功');
         navigate('/');
       } else {

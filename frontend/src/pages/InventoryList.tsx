@@ -29,6 +29,55 @@ const InventoryList: React.FC = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const values = form.getFieldsValue();
+      const params = {
+        system_type: values.system_type === 'all' ? undefined : values.system_type,
+        agent_code: values.agent_code,
+        agent_name: values.agent_name,
+        software_name: values.software_name === 'all' ? undefined : values.software_name,
+      };
+      
+      // 构建查询参数
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value);
+        }
+      });
+      
+      // 创建下载链接
+      const token = localStorage.getItem('token');
+      const url = `http://localhost:8000/api/v1/inventory/export?${queryParams.toString()}`;
+      
+      // 使用fetch下载文件
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('导出失败');
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `库存列表_${dayjs().format('YYYYMMDDHHmmss')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      message.success('导出成功');
+    } catch (error) {
+      message.error('导出失败');
+    }
+  };
+
   const fetchCommonData = async () => {
     try {
       const softRes = await api.get('/common/software');
@@ -96,7 +145,7 @@ const InventoryList: React.FC = () => {
           <Space>
             <Button type="primary" htmlType="submit">查询</Button>
             <Button onClick={() => { form.resetFields(); fetchData(); }}>重置</Button>
-            <Button>导出</Button>
+            <Button htmlType="button" onClick={handleExport}>导出</Button>
           </Space>
         </Form.Item>
       </Form>

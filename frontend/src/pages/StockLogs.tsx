@@ -94,8 +94,61 @@ const StockLogs: React.FC = () => {
     fetchData();
   };
 
-  const handleExport = () => {
-    message.info('导出功能开发中');
+  const handleExport = async () => {
+    try {
+      const values = form.getFieldsValue();
+      const params: any = {};
+      
+      if (values.system_type) params.system_type = values.system_type;
+      if (values.agent_code) params.agent_code = values.agent_code;
+      if (values.agent_name) params.agent_name = values.agent_name;
+      if (values.software_name) params.software_name = values.software_name;
+      if (values.change_type) {
+        if (values.change_type === 'transfer') {
+          params.change_type = 'transfer';
+        } else {
+          params.change_type = values.change_type;
+        }
+      }
+      if (values.date_range && values.date_range.length === 2) {
+        params.start_date = values.date_range[0].format('YYYY-MM-DD');
+        params.end_date = values.date_range[1].format('YYYY-MM-DD');
+      }
+      
+      const queryParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value);
+        }
+      });
+      
+      const token = localStorage.getItem('token');
+      const url = `http://localhost:8000/api/v1/inventory/logs/export/all?${queryParams.toString()}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('导出失败');
+      }
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `库存变动记录_${dayjs().format('YYYYMMDDHHmmss')}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      message.success('导出成功');
+    } catch (error) {
+      message.error('导出失败');
+    }
   };
 
   const columns = [
@@ -194,7 +247,7 @@ const StockLogs: React.FC = () => {
           <Space>
             <Button type="primary" htmlType="submit">查询</Button>
             <Button onClick={handleReset}>重置</Button>
-            <Button icon={<DownloadOutlined />} onClick={handleExport}>导出</Button>
+            <Button icon={<DownloadOutlined />} htmlType="button" onClick={handleExport}>导出</Button>
           </Space>
         </Form.Item>
       </Form>
