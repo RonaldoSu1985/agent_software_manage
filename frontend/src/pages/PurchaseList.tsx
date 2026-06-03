@@ -16,18 +16,7 @@ const PurchaseList: React.FC = () => {
   const [softwareList, setSoftwareList] = useState([]);
   const [agentList, setAgentList] = useState([]);
   const [currentUser, setCurrentUser] = useState('');
-
-  const systemOptions = [
-    { value: '', label: '请选择' },
-    { value: 'V3系统', label: 'V3系统' },
-    { value: 'LTB系统', label: 'LTB系统' },
-  ];
-
-  const softwareOptions = [
-    { value: '', label: '请选择' },
-    { value: '汇客餐饮', label: '汇客餐饮' },
-    { value: '汇客零售', label: '汇客零售' },
-  ];
+  const [systemTypes, setSystemTypes] = useState([]);
 
   const fetchData = async (values: any = {}) => {
     setLoading(true);
@@ -55,12 +44,14 @@ const PurchaseList: React.FC = () => {
 
   const fetchCommonData = async () => {
     try {
-      const [softRes, agentRes] = await Promise.all([
-        api.get('/common/software'),
-        api.get('/common/agents')
+      const [softRes, agentRes, systemRes] = await Promise.all([
+        api.get('/dictionary/items/by-type/SOFTWARE_NAME'),
+        api.get('/common/agents'),
+        api.get('/dictionary/items/by-type/SYSTEM_TYPE')
       ]);
-      setSoftwareList(softRes.data);
+      setSoftwareList(softRes.data || []);
       setAgentList(agentRes.data);
+      setSystemTypes(systemRes.data || []);
     } catch (error) {
       console.error('获取基础数据失败');
     }
@@ -185,8 +176,9 @@ const PurchaseList: React.FC = () => {
       <Form form={form} layout="inline" onFinish={handleSearch} style={{ marginBottom: 16 }}>
         <Form.Item name="system_type" label="代理商所属系统">
           <Select style={{ width: 150 }}>
-            {systemOptions.map((opt) => (
-              <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+            <Option value="">请选择</Option>
+            {systemTypes.map((item: any) => (
+              <Option key={item.item_key} value={item.item_value}>{item.item_name}</Option>
             ))}
           </Select>
         </Form.Item>
@@ -198,8 +190,9 @@ const PurchaseList: React.FC = () => {
         </Form.Item>
         <Form.Item name="software_name" label="软件名称">
           <Select style={{ width: 150 }}>
-            {softwareOptions.map((opt) => (
-              <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+            <Option value="">请选择</Option>
+            {softwareList.map((item: any) => (
+              <Option key={item.item_key} value={item.item_value}>{item.item_name}</Option>
             ))}
           </Select>
         </Form.Item>
@@ -231,8 +224,8 @@ const PurchaseList: React.FC = () => {
         <Form form={addForm} layout="vertical" onFinish={handleAdd}>
           <Form.Item name="system_type" label="代理商所属系统" rules={[{ required: true, message: '请选择代理商所属系统' }]}>
             <Select placeholder="请选择">
-              {systemOptions.filter(opt => opt.value !== '').map((opt) => (
-                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              {systemTypes.map((item: any) => (
+                <Option key={item.item_key} value={item.item_value}>{item.item_name}</Option>
               ))}
             </Select>
           </Form.Item>
@@ -244,8 +237,8 @@ const PurchaseList: React.FC = () => {
           </Form.Item>
           <Form.Item name="software_name" label="软件名称" rules={[{ required: true, message: '请选择软件名称' }]}>
             <Select placeholder="请选择">
-              {softwareOptions.filter(opt => opt.value !== '').map((opt) => (
-                <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+              {softwareList.map((item: any) => (
+                <Option key={item.item_key} value={item.item_value}>{item.item_name}</Option>
               ))}
             </Select>
           </Form.Item>

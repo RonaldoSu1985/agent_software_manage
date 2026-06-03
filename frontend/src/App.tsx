@@ -9,6 +9,7 @@ import TransferList from './pages/TransferList';
 import StockLogs from './pages/StockLogs';
 import UserList from './pages/UserList';
 import RoleList from './pages/RoleList';
+import DictionaryList from './pages/DictionaryList';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
@@ -38,6 +39,7 @@ function App() {
           <Route path="logs" element={<StockLogs />} />
           <Route path="users" element={<UserList />} />
           <Route path="roles" element={<RoleList />} />
+          <Route path="dictionary" element={<DictionaryList />} />
         </Route>
       </Routes>
     </BrowserRouter>

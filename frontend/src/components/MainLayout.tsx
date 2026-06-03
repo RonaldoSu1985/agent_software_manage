@@ -13,6 +13,7 @@ import {
   UserOutlined,
   LockOutlined,
   MenuOutlined,
+  FileOutlined,
 } from '@ant-design/icons';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 
@@ -71,35 +72,41 @@ const MainLayout: React.FC = () => {
     {
       key: '/',
       icon: <DashboardOutlined />,
-      label: '库存列表',
+      label: '代理商库存管理',
       permission: 'inventory.view',
     },
     {
       key: '/purchase',
       icon: <ShoppingOutlined />,
-      label: '采购记录',
+      label: '代理商采购记录',
       permission: 'purchase.view',
     },
     {
       key: '/install',
       icon: <DesktopOutlined />,
-      label: '安装记录',
+      label: '代理商安装记录',
       permission: 'installation.view',
     },
     {
       key: '/transfer',
       icon: <SwapOutlined />,
-      label: '划拨记录',
+      label: '代理商划拨记录',
       permission: 'transfer.view',
     },
     {
       key: '/logs',
       icon: <HistoryOutlined />,
-      label: '库存变动记录',
+      label: '代理商库存记录',
       permission: 'inventory.view',
     },
     {
       type: 'divider' as const,
+    },
+    {
+      key: '/dictionary',
+      icon: <FileOutlined />,
+      label: '数据字典',
+      permission: 'dictionary.manage',
     },
     {
       key: '/users',

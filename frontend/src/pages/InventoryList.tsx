@@ -9,6 +9,7 @@ const InventoryList: React.FC = () => {
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [systemTypes, setSystemTypes] = useState([]);
   const [softwareList, setSoftwareList] = useState([]);
 
   const fetchData = async (values: any = {}) => {
@@ -80,8 +81,13 @@ const InventoryList: React.FC = () => {
 
   const fetchCommonData = async () => {
     try {
-      const softRes = await api.get('/common/software');
-      setSoftwareList(softRes.data);
+      // 从数据字典获取代理商所属系统
+      const systemRes = await api.get('/dictionary/items/by-type/SYSTEM_TYPE');
+      setSystemTypes(systemRes.data || []);
+      
+      // 从数据字典获取软件名称
+      const softRes = await api.get('/dictionary/items/by-type/SOFTWARE_NAME');
+      setSoftwareList(softRes.data || []);
     } catch (error) {
       console.error('获取基础数据失败');
     }
@@ -121,23 +127,24 @@ const InventoryList: React.FC = () => {
     <div>
       <Form form={form} layout="inline" onFinish={fetchData} style={{ marginBottom: 20 }}>
         <Form.Item name="system_type" label="代理商所属系统" initialValue="all">
-          <Select style={{ width: 120 }}>
+          <Select style={{ width: 150 }}>
             <Option value="all">请选择</Option>
-            <Option value="V3系统">V3系统</Option>
-            <Option value="LTB系统">LTB系统</Option>
+            {systemTypes.map((item: any) => (
+              <Option key={item.item_key} value={item.item_value}>{item.item_name}</Option>
+            ))}
           </Select>
         </Form.Item>
         <Form.Item name="agent_code" label="代理商编号">
-          <Input placeholder="请输入" />
+          <Input placeholder="请输入" style={{ width: 150 }} />
         </Form.Item>
         <Form.Item name="agent_name" label="代理商名称">
-          <Input placeholder="请输入" />
+          <Input placeholder="请输入" style={{ width: 150 }} />
         </Form.Item>
         <Form.Item name="software_name" label="软件名称" initialValue="all">
-          <Select style={{ width: 120 }}>
+          <Select style={{ width: 150 }}>
             <Option value="all">请选择</Option>
-            {softwareList.map((s: any) => (
-              <Option key={s.id} value={s.name}>{s.name}</Option>
+            {softwareList.map((item: any) => (
+              <Option key={item.item_key} value={item.item_value}>{item.item_name}</Option>
             ))}
           </Select>
         </Form.Item>
