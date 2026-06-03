@@ -49,6 +49,13 @@ const permissionTreeData: PermissionItem[] = [
     ],
   },
   {
+    title: '数据字典',
+    key: 'dictionary',
+    children: [
+      { title: '字典管理', key: 'dictionary.manage' },
+    ],
+  },
+  {
     title: '系统管理',
     key: 'system',
     children: [
