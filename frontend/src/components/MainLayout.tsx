@@ -97,7 +97,7 @@ const MainLayout: React.FC = () => {
       key: '/logs',
       icon: <HistoryOutlined />,
       label: '代理商库存记录',
-      permission: 'inventory.view',
+      permission: 'logs.view',
     },
     {
       type: 'divider' as const,

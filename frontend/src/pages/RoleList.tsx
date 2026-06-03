@@ -21,7 +21,6 @@ const permissionTreeData: PermissionItem[] = [
     key: 'inventory',
     children: [
       { title: '库存查看', key: 'inventory.view' },
-      { title: '库存编辑', key: 'inventory.edit' },
     ],
   },
   {
@@ -46,6 +45,13 @@ const permissionTreeData: PermissionItem[] = [
     children: [
       { title: '划拨查看', key: 'transfer.view' },
       { title: '划拨创建', key: 'transfer.create' },
+    ],
+  },
+  {
+    title: '库存记录',
+    key: 'logs',
+    children: [
+      { title: '库存记录查看', key: 'logs.view' },
     ],
   },
   {
