@@ -105,7 +105,7 @@ const PurchaseList: React.FC = () => {
       });
       
       const token = localStorage.getItem('token');
-      const url = `http://localhost:8000/api/v1/inventory/logs/export/purchase?${queryParams.toString()}`;
+      const url = `/api/v1/inventory/logs/export/purchase?${queryParams.toString()}`;
       
       const response = await fetch(url, {
         headers: {
@@ -159,6 +159,7 @@ const PurchaseList: React.FC = () => {
     { title: '代理商名称', dataIndex: ['agent', 'agent_name'], key: 'agent_name' },
     { title: '软件名称', dataIndex: ['software', 'name'], key: 'software_name' },
     { title: '采购数量', dataIndex: 'change_qty', key: 'quantity' },
+    { title: '备注', dataIndex: 'remark', key: 'remark' },
     { title: '采购日期', dataIndex: 'created_at', key: 'date', render: (val: string) => dayjs(val).format('YYYY-MM-DD') },
     { title: '操作人', dataIndex: 'operator_id', key: 'operator' },
   ];

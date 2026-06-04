@@ -109,7 +109,7 @@ const InstallList: React.FC = () => {
       });
       
       const token = localStorage.getItem('token');
-      const url = `http://localhost:8000/api/v1/inventory/logs/export/installation?${queryParams.toString()}`;
+      const url = `/api/v1/inventory/logs/export/installation?${queryParams.toString()}`;
       
       const response = await fetch(url, {
         headers: {

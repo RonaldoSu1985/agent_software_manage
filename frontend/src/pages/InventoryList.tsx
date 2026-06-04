@@ -50,7 +50,7 @@ const InventoryList: React.FC = () => {
       
       // 创建下载链接
       const token = localStorage.getItem('token');
-      const url = `http://localhost:8000/api/v1/inventory/export?${queryParams.toString()}`;
+      const url = `/api/v1/inventory/export?${queryParams.toString()}`;
       
       // 使用fetch下载文件
       const response = await fetch(url, {

@@ -148,7 +148,7 @@ const DictionaryList: React.FC = () => {
       if (values.type_code) params.append('type_code', values.type_code);
       
       const token = localStorage.getItem('token');
-      const url = `http://localhost:8000/api/v1/dictionary/items/export?${params.toString()}`;
+      const url = `/api/v1/dictionary/items/export?${params.toString()}`;
       
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
