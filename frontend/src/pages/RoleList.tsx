@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Table, Button, Modal, Form, Input, message, Checkbox, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../api';
@@ -21,6 +21,9 @@ const permissionTreeData: PermissionItem[] = [
     key: 'inventory',
     children: [
       { title: '库存查看', key: 'inventory.view' },
+      { title: '代理商采购', key: 'purchase.create' },
+      { title: '代理商间划拨', key: 'transfer.create' },
+      { title: '商户安装', key: 'installation.create' },
     ],
   },
   {
@@ -28,7 +31,6 @@ const permissionTreeData: PermissionItem[] = [
     key: 'purchase',
     children: [
       { title: '采购查看', key: 'purchase.view' },
-      { title: '采购创建', key: 'purchase.create' },
     ],
   },
   {
@@ -36,7 +38,6 @@ const permissionTreeData: PermissionItem[] = [
     key: 'installation',
     children: [
       { title: '安装查看', key: 'installation.view' },
-      { title: '安装创建', key: 'installation.create' },
     ],
   },
   {
@@ -44,7 +45,6 @@ const permissionTreeData: PermissionItem[] = [
     key: 'transfer',
     children: [
       { title: '划拨查看', key: 'transfer.view' },
-      { title: '划拨创建', key: 'transfer.create' },
     ],
   },
   {
@@ -58,15 +58,24 @@ const permissionTreeData: PermissionItem[] = [
     title: '数据字典',
     key: 'dictionary',
     children: [
-      { title: '字典管理', key: 'dictionary.manage' },
+      { title: '字典查看', key: 'dictionary.view' },
+      { title: '字典新增', key: 'dictionary.create' },
+      { title: '字典编辑', key: 'dictionary.edit' },
+      { title: '字典删除', key: 'dictionary.delete' },
     ],
   },
   {
     title: '系统管理',
     key: 'system',
     children: [
-      { title: '用户管理', key: 'user.manage' },
-      { title: '角色管理', key: 'role.manage' },
+      { title: '用户查看', key: 'user.view' },
+      { title: '用户新增', key: 'user.create' },
+      { title: '用户编辑', key: 'user.edit' },
+      { title: '用户删除', key: 'user.delete' },
+      { title: '角色查看', key: 'role.view' },
+      { title: '角色新增', key: 'role.create' },
+      { title: '角色编辑', key: 'role.edit' },
+      { title: '角色删除', key: 'role.delete' },
     ],
   },
 ];
@@ -92,20 +101,48 @@ const RoleList: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  const [form] = Form.useForm();
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
+  const [form] = Form.useForm();
+  const [searchForm] = Form.useForm();
+
+  // 获取用户权限
+  const userPermissions = useMemo(() => {
+    try {
+      const permissionsStr = localStorage.getItem('permissions');
+      return permissionsStr ? JSON.parse(permissionsStr) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // 检查是否有指定权限
+  const hasPermission = (permission: string) => {
+    if (!permission) return true;
+    if (userPermissions.includes('*')) return true;
+    return userPermissions.includes(permission);
+  };
 
   useEffect(() => {
     fetchRoles();
   }, []);
 
-  const fetchRoles = async () => {
+  const fetchRoles = async (params: any = {}) => {
     try {
-      const response = await api.get('/roles');
+      const response = await api.get('/roles', { params });
       setRoles(response.data);
     } catch (error) {
       message.error('获取角色列表失败');
     }
+  };
+
+  const handleSearch = () => {
+    const values = searchForm.getFieldsValue();
+    fetchRoles(values);
+  };
+
+  const handleReset = () => {
+    searchForm.resetFields();
+    fetchRoles();
   };
 
   const showModal = (role?: Role) => {
@@ -170,7 +207,7 @@ const RoleList: React.FC = () => {
     }
   };
 
-  const onCheckAllChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onCheckAllChange = (e: any) => {
     if (e.target.checked) {
       const newKeys = ['*', ...allPermissionKeys];
       setCheckedKeys(newKeys);
@@ -263,14 +300,18 @@ const RoleList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_, record) => (
+      render: (_: any, record: any) => (
         <Space>
-          <Button icon={<EditOutlined />} onClick={() => showModal(record)}>
-            编辑
-          </Button>
-          <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} danger>
-            删除
-          </Button>
+          {hasPermission('role.edit') && (
+            <Button icon={<EditOutlined />} onClick={() => showModal(record)}>
+              编辑
+            </Button>
+          )}
+          {hasPermission('role.delete') && (
+            <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} danger>
+              删除
+            </Button>
+          )}
         </Space>
       ),
     },
@@ -278,13 +319,38 @@ const RoleList: React.FC = () => {
 
   return (
     <div>
-      <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} style={{ marginBottom: 16 }}>
-        添加角色
-      </Button>
-      <Table dataSource={roles} columns={columns} rowKey="id" />
+      <Form form={searchForm} layout="inline" style={{ marginBottom: 16 }}>
+        <Form.Item name="name" label="角色名称">
+          <Input placeholder="请输入角色名称" style={{ width: 200 }} />
+        </Form.Item>
+      </Form>
+      <div style={{ marginBottom: 16 }}>
+        <Button type="primary" onClick={handleSearch}>
+          查询
+        </Button>
+        <Button onClick={handleReset} style={{ marginLeft: 8 }}>
+          重置
+        </Button>
+        {hasPermission('role.create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} style={{ marginLeft: 8 }}>
+            新增角色
+          </Button>
+        )}
+      </div>
+      <Table
+        dataSource={roles}
+        columns={columns}
+        rowKey="id"
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showTotal: (total) => `共 ${total} 条`,
+        }}
+      />
 
       <Modal
-        title={editingRole ? '编辑角色' : '添加角色'}
+        title={editingRole ? '编辑角色' : '新增角色'}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}

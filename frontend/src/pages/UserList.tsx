@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../api';
@@ -12,6 +12,8 @@ interface User {
   role_id: number;
   role_name: string;
   is_active: boolean;
+  department: string;
+  department_name: string;
 }
 
 interface Role {
@@ -19,25 +21,60 @@ interface Role {
   name: string;
 }
 
+interface Department {
+  item_key: string;
+  item_value: string;
+}
+
 const UserList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
+  const [searchForm] = Form.useForm();
+
+  // 获取用户权限
+  const userPermissions = useMemo(() => {
+    try {
+      const permissionsStr = localStorage.getItem('permissions');
+      return permissionsStr ? JSON.parse(permissionsStr) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // 检查是否有指定权限
+  const hasPermission = (permission: string) => {
+    if (!permission) return true;
+    if (userPermissions.includes('*')) return true;
+    return userPermissions.includes(permission);
+  };
 
   useEffect(() => {
     fetchUsers();
     fetchRoles();
+    fetchDepartments();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (params: any = {}) => {
     try {
-      const response = await api.get('/users');
+      const response = await api.get('/users', { params });
       setUsers(response.data);
     } catch (error) {
       message.error('获取用户列表失败');
     }
+  };
+
+  const handleSearch = () => {
+    const values = searchForm.getFieldsValue();
+    fetchUsers(values);
+  };
+
+  const handleReset = () => {
+    searchForm.resetFields();
+    fetchUsers();
   };
 
   const fetchRoles = async () => {
@@ -49,6 +86,15 @@ const UserList: React.FC = () => {
     }
   };
 
+  const fetchDepartments = async () => {
+    try {
+      const response = await api.get('/dictionary/items/by-type/DEPARTMENT');
+      setDepartments(response.data || []);
+    } catch (error) {
+      message.error('获取部门列表失败');
+    }
+  };
+
   const showModal = (user?: User) => {
     if (user) {
       setEditingUser(user);
@@ -57,10 +103,14 @@ const UserList: React.FC = () => {
         full_name: user.full_name,
         role_id: user.role_id,
         is_active: user.is_active,
+        department: user.department,
       });
     } else {
       setEditingUser(null);
       form.resetFields();
+      form.setFieldsValue({
+        is_active: true,
+      });
     }
     setIsModalVisible(true);
   };
@@ -104,6 +154,11 @@ const UserList: React.FC = () => {
       key: 'full_name',
     },
     {
+      title: '所属部门',
+      dataIndex: 'department_name',
+      key: 'department_name',
+    },
+    {
       title: '角色',
       dataIndex: 'role_name',
       key: 'role_name',
@@ -117,14 +172,18 @@ const UserList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_, record) => (
+      render: (_: any, record: any) => (
         <span>
-          <Button icon={<EditOutlined />} onClick={() => showModal(record)} style={{ marginRight: 8 }}>
-            编辑
-          </Button>
-          <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} danger>
-            删除
-          </Button>
+          {hasPermission('user.edit') && (
+            <Button icon={<EditOutlined />} onClick={() => showModal(record)} style={{ marginRight: 8 }}>
+              编辑
+            </Button>
+          )}
+          {hasPermission('user.delete') && (
+            <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} danger>
+              删除
+            </Button>
+          )}
         </span>
       ),
     },
@@ -132,13 +191,53 @@ const UserList: React.FC = () => {
 
   return (
     <div>
-      <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} style={{ marginBottom: 16 }}>
-        添加用户
-      </Button>
-      <Table dataSource={users} columns={columns} rowKey="id" />
+      <Form form={searchForm} layout="inline" style={{ marginBottom: 16 }}>
+        <Form.Item name="full_name" label="姓名">
+          <Input placeholder="请输入姓名" style={{ width: 150 }} />
+        </Form.Item>
+        <Form.Item name="department" label="所属部门">
+          <Select placeholder="请选择部门" style={{ width: 150 }}>
+            {departments.map((dept) => (
+              <Option key={dept.item_key} value={dept.item_key}>
+                {dept.item_value}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item name="is_active" label="状态">
+          <Select placeholder="请选择状态" style={{ width: 120 }}>
+            <Option value={true}>启用</Option>
+            <Option value={false}>禁用</Option>
+          </Select>
+        </Form.Item>
+      </Form>
+      <div style={{ marginBottom: 16 }}>
+        <Button type="primary" onClick={handleSearch}>
+          查询
+        </Button>
+        <Button onClick={handleReset} style={{ marginLeft: 8 }}>
+          重置
+        </Button>
+        {hasPermission('user.create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} style={{ marginLeft: 8 }}>
+            新增用户
+          </Button>
+        )}
+      </div>
+      <Table
+        dataSource={users}
+        columns={columns}
+        rowKey="id"
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showTotal: (total) => `共 ${total} 条`,
+        }}
+      />
 
       <Modal
-        title={editingUser ? '编辑用户' : '添加用户'}
+        title={editingUser ? '编辑用户' : '新增用户'}
         open={isModalVisible}
         onOk={handleOk}
         onCancel={() => setIsModalVisible(false)}
@@ -173,6 +272,19 @@ const UserList: React.FC = () => {
               {roles.map((role) => (
                 <Option key={role.id} value={role.id}>
                   {role.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="department"
+            label="所属部门"
+            rules={[{ required: true, message: '请选择所属部门' }]}
+          >
+            <Select>
+              {departments.map((dept) => (
+                <Option key={dept.item_key} value={dept.item_key}>
+                  {dept.item_value}
                 </Option>
               ))}
             </Select>

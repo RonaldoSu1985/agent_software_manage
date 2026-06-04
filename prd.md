@@ -260,6 +260,7 @@
 - 用户名
 - 姓名
 - 角色
+- 部门
 - 创建时间
 - 操作
 
@@ -268,6 +269,7 @@
 - 密码
 - 姓名
 - 角色（下拉选择）
+- 部门（下拉选择：从数据字典获取）
 
 ### 2.8 角色管理
 
@@ -409,6 +411,7 @@
 | hashed_password | string | 密码哈希 |
 | full_name | string | 姓名 |
 | role_id | int | 角色ID（外键） |
+| department | string | 部门编码（从数据字典获取） |
 | is_active | bool | 是否激活 |
 | created_at | datetime | 创建时间 |
 

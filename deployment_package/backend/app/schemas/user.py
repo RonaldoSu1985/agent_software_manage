@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     full_name: str
     role_id: int
     is_active: bool = True
+    department: Optional[str] = None
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -14,14 +15,17 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role_id: Optional[int] = None
     is_active: Optional[bool] = None
+    department: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
     username: str
     full_name: str
-    role_id: int
+    role_id: Optional[int] = None
     role_name: str
     is_active: bool
+    department: str
+    department_name: str
 
 class RoleCreate(BaseModel):
     name: str

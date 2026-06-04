@@ -22,6 +22,7 @@ class User(Base):
     full_name = Column(String(100))
     role_id = Column(Integer, ForeignKey("roles.id"))
     is_active = Column(Boolean, default=True)
+    department = Column(String(50))
     created_at = Column(DateTime, default=func.now())
 
     role = relationship("Role", back_populates="users")

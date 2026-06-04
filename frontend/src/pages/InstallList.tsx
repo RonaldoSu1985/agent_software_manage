@@ -14,7 +14,6 @@ const InstallList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [softwareList, setSoftwareList] = useState([]);
-  const [agentList, setAgentList] = useState([]);
   const [currentUser, setCurrentUser] = useState('');
   const [systemTypes, setSystemTypes] = useState([]);
 
@@ -46,13 +45,11 @@ const InstallList: React.FC = () => {
 
   const fetchCommonData = async () => {
     try {
-      const [softRes, agentRes, systemRes] = await Promise.all([
+      const [softRes, systemRes] = await Promise.all([
         api.get('/dictionary/items/by-type/SOFTWARE_NAME'),
-        api.get('/common/agents'),
         api.get('/dictionary/items/by-type/SYSTEM_TYPE')
       ]);
       setSoftwareList(softRes.data || []);
-      setAgentList(agentRes.data);
       setSystemTypes(systemRes.data || []);
     } catch (error) {
       console.error('获取基础数据失败');
@@ -72,6 +69,12 @@ const InstallList: React.FC = () => {
       } catch {
         setCurrentUser('admin');
       }
+    }
+    
+    // 检测URL参数，自动打开新增弹窗
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('add') === 'true') {
+      handleShowModal();
     }
   }, []);
 
@@ -104,7 +107,7 @@ const InstallList: React.FC = () => {
       const queryParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, value);
+          queryParams.append(key, String(value));
         }
       });
       
@@ -215,17 +218,27 @@ const InstallList: React.FC = () => {
         <Form.Item name="operator" label="操作人">
           <Input style={{ width: 120 }} placeholder="请输入操作人" />
         </Form.Item>
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">查询</Button>
-            <Button onClick={handleReset}>重置</Button>
-            <Button icon={<DownloadOutlined />} htmlType="button" onClick={handleExport}>导出</Button>
-            <Button type="primary" onClick={handleShowModal}>商户安装</Button>
-          </Space>
-        </Form.Item>
       </Form>
+      <div style={{ marginBottom: 20 }}>
+        <Space>
+          <Button type="primary" onClick={() => form.submit()}>查询</Button>
+          <Button onClick={handleReset}>重置</Button>
+          <Button icon={<DownloadOutlined />} htmlType="button" onClick={handleExport}>导出</Button>
+        </Space>
+      </div>
 
-      <Table columns={columns} dataSource={data} rowKey="id" loading={loading} />
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
+        loading={loading}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showTotal: (total) => `共 ${total} 条`,
+        }}
+      />
 
       <Modal
         title="商户安装软件"

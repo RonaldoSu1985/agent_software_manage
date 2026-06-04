@@ -1,499 +1,386 @@
 # 代理商软件库存管理系统 - 技术设计文档
 
-## 1. 系统架构
+## 1. 技术选型
 
-### 1.1 架构概述
-本系统采用前后端分离架构，前端使用 React + TypeScript，后端使用 FastAPI + MySQL。
+### 1.1 架构风格
+- **架构模式**: 前后端分离架构
+- **设计模式**: RESTful API + 微服务思想（单体应用实现）
 
 ### 1.2 技术栈
 
-| 分类 | 技术 | 版本 |
-|------|------|------|
-| 前端框架 | React | 18.x |
-| 前端语言 | TypeScript | 5.x |
-| 前端构建工具 | Vite | 8.x |
-| UI组件库 | Ant Design | 5.x |
-| 后端框架 | FastAPI | 0.104.x |
-| 后端语言 | Python | 3.12+ |
-| 数据库 | MySQL | 8.0+ |
-| ORM | SQLAlchemy | 2.0+ |
-| 认证 | JWT | PyJWT |
-| 密码哈希 | bcrypt | - |
+| 分类 | 技术 | 版本 | 说明 |
+|------|------|------|------|
+| 后端语言 | Python | 3.10+ | 核心业务逻辑开发 |
+| 后端框架 | FastAPI | 0.100+ | 高性能异步API框架 |
+| 数据库 | MySQL | 8.0+ | 关系型数据库 |
+| ORM | SQLAlchemy | 2.0+ | 异步ORM框架 |
+| 前端语言 | TypeScript | 5.0+ | 类型安全的前端开发 |
+| 前端框架 | React | 18+ | 组件化前端框架 |
+| 构建工具 | Vite | 6.0+ | 快速构建工具 |
+| UI组件 | Ant Design | 5.0+ | 企业级UI组件库 |
+| 状态管理 | React Context | - | 轻量级状态管理 |
+| HTTP客户端 | Axios | 1.6+ | HTTP请求库 |
+| 认证 | JWT | - | 无状态身份认证 |
 
-### 1.3 架构图
+---
+
+## 2. 架构设计
+
+### 2.1 系统架构图
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        前端层 (React)                          │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐  │
-│  │ Login    │ │ Inventory│ │ Purchase │ │ MainLayout       │  │
-│  │ Page     │ │ List     │ │ List     │ │ (路由/导航)      │  │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────────┬─────────┘  │
-│       │            │            │                  │           │
-│       └────────────┴────────────┴──────────────────┘           │
-│                          │                                   │
-└──────────────────────────┼─────────────────────────────────────┘
-                           │ HTTP/HTTPS
-                           ▼
+│                        前端层 (Frontend)                        │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  │
+│  │ 登录页  │ │ 库存管理│ │ 采购管理│ │ 安装管理│ │ 用户管理│  │
+│  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘  │
+│       │           │           │           │           │        │
+└───────┼───────────┼───────────┼───────────┼───────────┼────────┘
+        │           │           │           │           │
+        ▼           ▼           ▼           ▼           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       后端层 (FastAPI)                         │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │                    API Gateway                          │   │
-│  │  /api/v1/auth    /api/v1/inventory    /api/v1/business │   │
-│  │  /api/v1/common  /api/v1/rbac        /api/v1/dictionary│   │
-│  └──────────────────┬──────────────────────────────────────┘   │
-│                     │                                         │
-│  ┌──────────────────┴──────────────────────────────────────┐   │
-│  │                    Service Layer                        │   │
-│  │  AuthService    InventoryService    BusinessService    │   │
-│  └──────────────────┬──────────────────────────────────────┘   │
-│                     │                                         │
-│  ┌──────────────────┴──────────────────────────────────────┐   │
-│  │                    Data Access Layer                     │   │
-│  │              SQLAlchemy Async Session                   │   │
-│  └──────────────────┬──────────────────────────────────────┘   │
-│                     │                                         │
-└─────────────────────┼─────────────────────────────────────────┘
-                      │
-                      ▼
+│                       API网关层 (Nginx)                         │
+│                        反向代理 / 负载均衡                       │
+└───────┬─────────────────────────────────────────────────────────┘
+        │
+        ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      数据层 (MySQL)                           │
-│  ┌──────┐ ┌───────┐ ┌──────────┐ ┌───────────┐ ┌──────────┐   │
-│  │users │ │ roles │ │ agents   │ │ software  │ │inventory│   │
-│  └──────┘ └───────┘ └──────────┘ └───────────┘ └──────────┘   │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐            │
-│  │purchase_     │ │installation_ │ │transfer_     │            │
-│  │records       │ │records       │ │records       │            │
-│  └──────────────┘ └──────────────┘ └──────────────┘            │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐            │
-│  │inventory_    │ │dictionary_   │ │dictionary_   │            │
-│  │logs          │ │type          │ │item          │            │
-│  └──────────────┘ └──────────────┘ └──────────────┘            │
+│                        后端层 (Backend)                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Auth API   │  │ Inventory API│  │ Business API │          │
+│  │  (认证模块)  │  │   (库存模块)  │  │  (业务模块)   │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                   │
+│  ┌──────▼───────┐  ┌──────▼───────┐  ┌──────▼───────┐          │
+│  │   RBAC API   │  │ Dictionary API│  │   Deps       │          │
+│  │  (权限模块)  │  │   (字典模块)  │  │  (依赖注入)   │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                 │                 │                   │
+│         └─────────────────┼─────────────────┘                   │
+│                           ▼                                    │
+│                  ┌────────────────┐                            │
+│                  │   Services     │                            │
+│                  │ (业务服务层)   │                            │
+│                  └───────┬────────┘                            │
+│                           ▼                                    │
+│                  ┌────────────────┐                            │
+│                  │     CRUD       │                            │
+│                  │  (数据访问层)   │                            │
+│                  └───────┬────────┘                            │
+│                           ▼                                    │
+│                  ┌────────────────┐                            │
+│                  │  Database      │                            │
+│                  │    (MySQL)     │                            │
+│                  └────────────────┘                            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### 2.2 模块划分
+
+| 模块 | 功能说明 | 主要文件 |
+|------|----------|----------|
+| auth | 用户认证与授权 | `api/v1/endpoints/auth.py`, `services/auth_service.py` |
+| rbac | 用户与角色管理 | `api/v1/endpoints/rbac.py`, `models/user.py` |
+| inventory | 库存管理 | `api/v1/endpoints/inventory.py`, `services/inventory_service.py` |
+| business | 业务操作（采购/安装/划拨） | `api/v1/endpoints/business.py`, `models/business.py` |
+| dictionary | 数据字典管理 | `api/v1/endpoints/dictionary.py`, `crud/dictionary.py` |
+| common | 通用接口 | `api/v1/endpoints/common.py` |
+
 ---
 
-## 2. 目录结构
+## 3. 目录结构
 
-### 2.1 后端目录结构
+### 3.1 后端目录结构
 
 ```
 backend/
-├── app/
-│   ├── api/
-│   │   ├── v1/
-│   │   │   ├── endpoints/
-│   │   │   │   ├── auth.py          # 认证相关接口
-│   │   │   │   ├── inventory.py      # 库存相关接口
-│   │   │   │   ├── business.py       # 业务操作接口（采购/安装/划拨）
-│   │   │   │   ├── common.py         # 通用接口（软件/代理商列表）
-│   │   │   │   ├── rbac.py           # 用户/角色管理接口
-│   │   │   │   └── dictionary.py     # 数据字典接口
-│   │   │   └── api.py                # 路由注册
-│   │   └── deps.py                   # 依赖注入（数据库会话、当前用户）
-│   ├── core/
-│   │   ├── config.py                 # 配置管理
-│   │   └── config_test.py            # 测试配置
-│   ├── models/
-│   │   ├── database.py               # 数据库连接配置
-│   │   ├── business.py               # 业务模型（代理商、软件、库存等）
-│   │   ├── user.py                   # 用户模型（用户、角色）
-│   │   └── dictionary.py             # 数据字典模型
-│   ├── schemas/
-│   │   ├── business.py               # 业务相关数据结构
-│   │   ├── user.py                   # 用户相关数据结构
-│   │   ├── token.py                  # Token相关数据结构
-│   │   └── dictionary.py             # 数据字典相关数据结构
-│   ├── services/
-│   │   ├── auth_service.py           # 认证服务
-│   │   └── inventory_service.py      # 库存服务
-│   └── main.py                       # 应用入口
-├── scripts/
-│   ├── init_dictionary.py            # 数据字典初始化脚本
-│   ├── init_users.py                 # 用户初始化脚本
-│   ├── init_database.py              # 数据库初始化脚本
-│   ├── init_test_data.py             # 测试数据初始化脚本
-│   └── clear_test_data.py            # 测试数据清理脚本
-├── requirements.txt                  # 依赖清单
-└── init.sql                          # MySQL数据库初始化脚本
+├── app/                                    # 应用主目录
+│   ├── api/                                # API层
+│   │   ├── v1/                             # 版本1 API
+│   │   │   ├── endpoints/                  # 端点定义
+│   │   │   │   ├── auth.py                 # 认证接口
+│   │   │   │   ├── rbac.py                 # 用户/角色管理
+│   │   │   │   ├── inventory.py            # 库存查询接口
+│   │   │   │   ├── business.py             # 业务操作接口
+│   │   │   │   ├── dictionary.py           # 数据字典接口
+│   │   │   │   └── common.py               # 通用接口
+│   │   │   └── api.py                      # API路由注册
+│   │   └── deps.py                         # 依赖注入定义
+│   ├── core/                               # 核心配置
+│   │   ├── config.py                       # 应用配置
+│   │   └── config_test.py                  # 测试配置
+│   ├── models/                             # 数据库模型
+│   │   ├── database.py                     # 数据库连接
+│   │   ├── user.py                         # 用户/角色模型
+│   │   ├── dictionary.py                   # 数据字典模型
+│   │   └── business.py                     # 业务数据模型
+│   ├── schemas/                            # Pydantic Schema
+│   │   ├── user.py                         # 用户相关Schema
+│   │   ├── token.py                        # Token Schema
+│   │   ├── dictionary.py                   # 字典相关Schema
+│   │   └── business.py                     # 业务相关Schema
+│   ├── services/                           # 业务服务层
+│   │   ├── auth_service.py                 # 认证服务
+│   │   └── inventory_service.py            # 库存服务
+│   ├── crud/                               # 数据访问层
+│   │   └── dictionary.py                   # 字典CRUD操作
+│   └── main.py                             # 应用入口
+├── requirements.txt                         # 依赖清单
+└── init.sql                                # 数据库初始化脚本
 ```
 
-### 2.2 前端目录结构
+### 3.2 前端目录结构
 
 ```
 frontend/
-├── public/                           # 静态资源
-├── src/
-│   ├── api/
-│   │   └── index.ts                  # API请求封装（Axios）
-│   ├── components/
-│   │   └── MainLayout.tsx            # 主布局组件
-│   ├── pages/
-│   │   ├── LoginPage.tsx             # 登录页面
-│   │   ├── InventoryList.tsx         # 代理商库存管理页面
-│   │   ├── PurchaseList.tsx          # 代理商采购记录页面
-│   │   ├── InstallList.tsx           # 代理商安装记录页面
-│   │   ├── TransferList.tsx          # 代理商划拨记录页面
-│   │   ├── StockLogs.tsx             # 代理商库存记录页面
-│   │   ├── DictionaryList.tsx        # 数据字典管理页面
-│   │   ├── UserList.tsx              # 用户管理页面
-│   │   └── RoleList.tsx              # 角色管理页面
-│   ├── App.tsx                       # 应用组件（路由配置）
-│   ├── main.tsx                      # 应用入口
-│   └── index.css                     # 全局样式
-├── package.json                      # 依赖配置
-├── vite.config.ts                    # Vite配置
-└── tsconfig.json                     # TypeScript配置
+├── src/                                    # 源代码目录
+│   ├── api/                                # API调用封装
+│   │   └── index.ts                        # API接口定义
+│   ├── components/                         # 公共组件
+│   │   └── MainLayout.tsx                  # 主布局组件
+│   ├── pages/                              # 页面组件
+│   │   ├── LoginPage.tsx                   # 登录页
+│   │   ├── InventoryList.tsx               # 库存列表页
+│   │   ├── PurchaseList.tsx                # 采购记录页
+│   │   ├── InstallList.tsx                 # 安装记录页
+│   │   ├── TransferList.tsx                # 划拨记录页
+│   │   ├── StockLogs.tsx                   # 库存变动记录页
+│   │   ├── DictionaryList.tsx              # 数据字典页
+│   │   ├── UserList.tsx                    # 用户管理页
+│   │   └── RoleList.tsx                    # 角色管理页
+│   ├── styles/                             # 样式文件
+│   │   └── responsive.css                  # 响应式样式
+│   ├── App.tsx                             # 应用根组件
+│   ├── main.tsx                            # 应用入口
+│   ├── index.css                           # 全局样式
+│   └── App.css                             # 应用样式
+├── public/                                 # 静态资源
+├── vite.config.ts                          # Vite配置
+├── tsconfig.json                           # TypeScript配置
+└── package.json                            # 项目配置
 ```
 
 ---
 
-## 3. 关键类与方法设计
+## 4. 关键类与方法设计
 
-### 3.1 后端API接口
+### 4.1 后端核心类
 
-#### 3.1.1 认证接口 (`auth.py`)
+#### 4.1.1 数据库模型类
 
-| 方法 | 路径 | 功能 |
+**User 模型** (`models/user.py`)
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | int | PRIMARY KEY, AUTO_INCREMENT | 用户ID |
+| username | str | UNIQUE, NOT NULL | 用户名 |
+| hashed_password | str | NOT NULL | 密码哈希 |
+| full_name | str | - | 用户姓名 |
+| role_id | int | FOREIGN KEY | 角色ID |
+| department | str | - | 部门编码 |
+| is_active | bool | DEFAULT True | 是否激活 |
+| created_at | datetime | DEFAULT NOW() | 创建时间 |
+
+**Role 模型** (`models/user.py`)
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | int | PRIMARY KEY, AUTO_INCREMENT | 角色ID |
+| name | str | UNIQUE, NOT NULL | 角色名称 |
+| permissions | str | - | 权限列表(JSON) |
+| created_at | datetime | DEFAULT NOW() | 创建时间 |
+
+**DictionaryType 模型** (`models/dictionary.py`)
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | int | PRIMARY KEY, AUTO_INCREMENT | 类型ID |
+| type_name | str | NOT NULL | 类型名称 |
+| type_code | str | UNIQUE, NOT NULL | 类型编码 |
+| description | str | - | 描述 |
+| status | bool | DEFAULT True | 状态 |
+| created_at | datetime | DEFAULT NOW() | 创建时间 |
+| updated_at | datetime | ON UPDATE NOW() | 更新时间 |
+
+**DictionaryItem 模型** (`models/dictionary.py`)
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | int | PRIMARY KEY, AUTO_INCREMENT | 字典项ID |
+| type_id | int | FOREIGN KEY | 字典类型ID |
+| item_key | str | NOT NULL | 字典键 |
+| item_value | str | NOT NULL | 字典值 |
+| item_name | str | - | 字典名称 |
+| sort_order | int | DEFAULT 0 | 排序号 |
+| status | bool | DEFAULT True | 状态 |
+| remark | str | - | 备注 |
+| created_at | datetime | DEFAULT NOW() | 创建时间 |
+| updated_at | datetime | ON UPDATE NOW() | 更新时间 |
+
+**业务数据模型** (`models/business.py`)
+
+| 模型 | 说明 | 关键字段 |
+|------|------|----------|
+| Agent | 代理商信息 | agent_code, agent_name, system_type |
+| Software | 软件信息 | name |
+| Inventory | 库存信息 | agent_id, software_id, quantity |
+| PurchaseRecord | 采购记录 | agent_id, software_id, quantity, purchase_date |
+| InstallationRecord | 安装记录 | agent_id, software_id, merchant_code, quantity |
+| TransferRecord | 划拨记录 | from_agent_id, to_agent_id, software_id, quantity |
+| InventoryLog | 库存变动日志 | agent_id, software_id, change_type, before_qty, change_qty, after_qty |
+
+#### 4.1.2 Service 类
+
+**AuthService** (`services/auth_service.py`)
+
+| 方法 | 功能 | 参数 | 返回值 |
+|------|------|------|--------|
+| create_access_token | 生成JWT Token | data: dict, expires_delta: timedelta | str (token) |
+| verify_password | 验证密码 | plain_password: str, hashed_password: str | bool |
+| get_password_hash | 加密密码 | password: str | str (hash) |
+
+**InventoryService** (`services/inventory_service.py`)
+
+| 方法 | 功能 | 参数 | 返回值 |
+|------|------|------|--------|
+| purchase | 采购入库 | db, agent_id, software_id, quantity, operator_id | InventoryLog |
+| install | 安装出库 | db, agent_id, software_id, merchant_code, merchant_name, quantity, operator_id | InventoryLog |
+| transfer | 划拨操作 | db, from_agent_id, to_agent_id, software_id, quantity, operator_id | (from_log, to_log) |
+
+### 4.2 前端核心组件
+
+**MainLayout** (`components/MainLayout.tsx`)
+
+| 属性 | 类型 | 说明 |
 |------|------|------|
-| POST | /api/v1/auth/login | 用户登录 |
-| POST | /api/v1/auth/logout | 用户登出 |
-| GET | /api/v1/auth/me | 获取当前用户信息 |
+| children | ReactNode | 子组件内容 |
 
-#### 3.1.2 库存接口 (`inventory.py`)
+**页面组件** (`pages/*.tsx`)
 
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /api/v1/inventory/list | 查询库存列表 |
-| GET | /api/v1/inventory/logs | 查询库存变动日志 |
-
-#### 3.1.3 业务接口 (`business.py`)
-
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| POST | /api/v1/business/purchase | 创建采购记录 |
-| POST | /api/v1/business/install | 创建安装记录 |
-| POST | /api/v1/business/transfer | 创建划拨记录 |
-
-#### 3.1.4 通用接口 (`common.py`)
-
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /api/v1/common/software | 获取软件列表 |
-| GET | /api/v1/common/agents | 获取代理商列表 |
-
-#### 3.1.5 RBAC接口 (`rbac.py`)
-
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /api/v1/users | 查询用户列表 |
-| POST | /api/v1/users | 创建用户 |
-| GET | /api/v1/users/{id} | 获取用户详情 |
-| PUT | /api/v1/users/{id} | 更新用户 |
-| DELETE | /api/v1/users/{id} | 删除用户 |
-| GET | /api/v1/roles | 查询角色列表 |
-| POST | /api/v1/roles | 创建角色 |
-| GET | /api/v1/roles/{id} | 获取角色详情 |
-| PUT | /api/v1/roles/{id} | 更新角色 |
-| DELETE | /api/v1/roles/{id} | 删除角色 |
-
-#### 3.1.6 数据字典接口 (`dictionary.py`)
-
-| 方法 | 路径 | 功能 |
-|------|------|------|
-| GET | /api/v1/dictionary/types | 获取字典类型列表 |
-| POST | /api/v1/dictionary/types | 创建字典类型 |
-| GET | /api/v1/dictionary/types/{type_id} | 获取字典类型详情 |
-| PUT | /api/v1/dictionary/types/{type_id} | 更新字典类型 |
-| DELETE | /api/v1/dictionary/types/{type_id} | 删除字典类型 |
-| GET | /api/v1/dictionary/items | 获取字典项列表 |
-| POST | /api/v1/dictionary/items | 创建字典项 |
-| GET | /api/v1/dictionary/items/{item_id} | 获取字典项详情 |
-| PUT | /api/v1/dictionary/items/{item_id} | 更新字典项 |
-| DELETE | /api/v1/dictionary/items/{item_id} | 删除字典项 |
-| GET | /api/v1/dictionary/items/export | 导出字典项 |
-| GET | /api/v1/dictionary/by_type/{type_code} | 按类型编码获取字典项 |
-
-### 3.2 服务层方法
-
-#### 3.2.1 AuthService (`services/auth_service.py`)
-
-| 方法 | 参数 | 返回值 | 功能 |
-|------|------|--------|------|
-| authenticate_user | db, username, password | User | 验证用户身份 |
-| create_access_token | data, expires_delta | str | 生成JWT Token |
-| get_password_hash | password | str | 密码哈希 |
-| verify_password | plain_password, hashed_password | bool | 验证密码 |
-
-#### 3.2.2 InventoryService (`services/inventory_service.py`)
-
-| 方法 | 参数 | 返回值 | 功能 |
-|------|------|--------|------|
-| get_or_create_agent | db, agent_code, agent_name, system_type | Agent | 获取或创建代理商 |
-| get_or_create_software | db, name | Software | 获取或创建软件 |
-| get_inventory | db, agent_id, software_id | Inventory | 获取库存记录 |
-| add_purchase | db, agent_id, software_id, quantity, purchase_date, operator_id, remark | PurchaseRecord | 添加采购记录 |
-| add_installation | db, agent_id, software_id, quantity, merchant_code, merchant_name, install_date, operator_id, remark | InstallationRecord | 添加安装记录 |
-| add_transfer | db, from_agent_id, to_agent_id, software_id, quantity, transfer_date, operator_id, remark | TransferRecord | 添加划拨记录 |
-| update_inventory | db, agent_id, software_id, delta | Inventory | 更新库存数量 |
-| add_inventory_log | db, agent_id, software_id, change_type, before_qty, change_qty, after_qty, related_id, operator_id | InventoryLog | 添加库存变动日志 |
-
-### 3.3 数据模型
-
-#### 3.3.1 用户模型 (`models/user.py`)
-
-**User 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 用户ID |
-| username | String(50) | Unique, NotNull | 用户名 |
-| hashed_password | String | NotNull | 密码哈希 |
-| full_name | String(100) | - | 姓名 |
-| role_id | Integer | ForeignKey | 角色ID |
-| is_active | Boolean | Default=True | 是否激活 |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-**Role 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 角色ID |
-| name | String(50) | Unique, NotNull | 角色名称 |
-| permissions | Text | - | 权限列表(JSON) |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-#### 3.3.2 业务模型 (`models/business.py`)
-
-**Agent 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 代理商ID |
-| agent_code | String(50) | Unique, NotNull | 代理商编号 |
-| agent_name | String(100) | NotNull | 代理商名称 |
-| system_type | String(20) | NotNull | 所属系统（从数据字典获取） |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-**Software 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 软件ID |
-| name | String(50) | Unique, NotNull | 软件名称 |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-**Inventory 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 库存ID |
-| agent_id | Integer | ForeignKey, NotNull | 代理商ID |
-| software_id | Integer | ForeignKey, NotNull | 软件ID |
-| quantity | Integer | Default=0, NotNull | 库存数量 |
-| updated_at | DateTime | Default=now() | 更新时间 |
-
-**PurchaseRecord 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 采购记录ID |
-| agent_id | Integer | ForeignKey, NotNull | 代理商ID |
-| software_id | Integer | ForeignKey, NotNull | 软件ID |
-| quantity | Integer | NotNull | 采购数量 |
-| purchase_date | Date | NotNull | 采购日期 |
-| operator_id | Integer | ForeignKey, NotNull | 操作人ID |
-| remark | Text | - | 备注 |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-**InstallationRecord 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 安装记录ID |
-| agent_id | Integer | ForeignKey, NotNull | 代理商ID |
-| software_id | Integer | ForeignKey, NotNull | 软件ID |
-| merchant_code | String(50) | NotNull | 商户编号 |
-| merchant_name | String(100) | NotNull | 商户名称 |
-| quantity | Integer | NotNull | 安装数量 |
-| install_date | Date | NotNull | 安装日期 |
-| operator_id | Integer | ForeignKey, NotNull | 操作人ID |
-| remark | Text | - | 备注 |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-**TransferRecord 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 划拨记录ID |
-| from_agent_id | Integer | ForeignKey, NotNull | 划出代理商ID |
-| to_agent_id | Integer | ForeignKey, NotNull | 划入代理商ID |
-| software_id | Integer | ForeignKey, NotNull | 软件ID |
-| quantity | Integer | NotNull | 划拨数量 |
-| transfer_date | Date | NotNull | 划拨日期 |
-| operator_id | Integer | ForeignKey, NotNull | 操作人ID |
-| remark | Text | - | 备注 |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-**InventoryLog 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 日志ID |
-| agent_id | Integer | ForeignKey, NotNull | 代理商ID |
-| software_id | Integer | ForeignKey, NotNull | 软件ID |
-| change_type | String(20) | NotNull | 变动类型 |
-| before_qty | Integer | NotNull | 变动前数量 |
-| change_qty | Integer | NotNull | 变动数量 |
-| after_qty | Integer | NotNull | 变动后数量 |
-| related_id | Integer | - | 关联记录ID |
-| operator_id | Integer | ForeignKey, NotNull | 操作人ID |
-| created_at | DateTime | Default=now() | 创建时间 |
-
-#### 3.3.3 数据字典模型 (`models/dictionary.py`)
-
-**DictionaryType 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 类型ID |
-| type_name | String(100) | NotNull | 类型名称 |
-| type_code | String(50) | Unique, NotNull | 类型编码 |
-| description | String(500) | - | 描述 |
-| status | Integer | Default=1 | 状态 |
-| created_at | DateTime | Default=now() | 创建时间 |
-| updated_at | DateTime | Default=now() | 更新时间 |
-
-**DictionaryItem 类**
-| 字段 | 类型 | 约束 | 说明 |
-|------|------|------|------|
-| id | Integer | PrimaryKey | 字典项ID |
-| type_id | Integer | ForeignKey, NotNull | 字典类型ID |
-| item_key | String(100) | NotNull | 字典键 |
-| item_value | String(500) | NotNull | 字典值 |
-| item_name | String(200) | - | 字典名称 |
-| sort_order | Integer | Default=0 | 排序号 |
-| status | Integer | Default=1 | 状态 |
-| remark | String(500) | - | 备注 |
-| created_at | DateTime | Default=now() | 创建时间 |
-| updated_at | DateTime | Default=now() | 更新时间 |
+| 组件 | 功能 | 主要交互 |
+|------|------|----------|
+| LoginPage | 用户登录 | 表单提交、Token存储 |
+| InventoryList | 库存列表 | 查询、查看变动记录 |
+| PurchaseList | 采购记录 | 查询、新增采购 |
+| InstallList | 安装记录 | 查询、新增安装 |
+| TransferList | 划拨记录 | 查询、新增划拨 |
+| StockLogs | 库存变动日志 | 查询、导出 |
+| DictionaryList | 数据字典 | CRUD操作 |
+| UserList | 用户管理 | CRUD操作 |
+| RoleList | 角色管理 | CRUD操作、权限配置 |
 
 ---
 
-## 4. 数据库与数据结构
+## 5. 数据库与数据结构设计
 
-### 4.1 数据库配置
+### 5.1 数据库表结构
 
-**数据库连接信息**：
-- 主机：192.168.0.118
-- 端口：3306
-- 用户名：agm
-- 密码：aa111111
-- 数据库名：agent_management
-
-**连接字符串**：
-```python
-mysql+aiomysql://agm:aa111111@192.168.0.118:3306/agent_management?charset=utf8mb4
-```
-
-### 4.2 数据库表结构
-
-#### 4.2.1 users 表
+#### 5.1.1 用户表 (users)
 
 ```sql
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     hashed_password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
-    role_id INTEGER,
-    is_active BOOLEAN DEFAULT 1,
+    role_id INT,
+    department VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 ```
 
-#### 4.2.2 roles 表
+#### 5.1.2 角色表 (roles)
 
 ```sql
 CREATE TABLE roles (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(50) UNIQUE NOT NULL,
     permissions TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-#### 4.2.3 dictionary_type 表
+#### 5.1.3 字典类型表 (dictionary_type)
 
 ```sql
 CREATE TABLE dictionary_type (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     type_name VARCHAR(100) NOT NULL,
     type_code VARCHAR(50) UNIQUE NOT NULL,
-    description VARCHAR(500),
-    status TINYINT(1) DEFAULT 1,
+    description TEXT,
+    status BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 ```
 
-#### 4.2.4 dictionary_item 表
+#### 5.1.4 字典项表 (dictionary_item)
 
 ```sql
 CREATE TABLE dictionary_item (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    type_id INTEGER NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    type_id INT NOT NULL,
     item_key VARCHAR(100) NOT NULL,
-    item_value VARCHAR(500) NOT NULL,
-    item_name VARCHAR(200),
-    sort_order INTEGER DEFAULT 0,
-    status TINYINT(1) DEFAULT 1,
-    remark VARCHAR(500),
+    item_value VARCHAR(255) NOT NULL,
+    item_name VARCHAR(100),
+    sort_order INT DEFAULT 0,
+    status BOOLEAN DEFAULT TRUE,
+    remark TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (type_id) REFERENCES dictionary_type(id)
 );
 ```
 
-#### 4.2.5 agents 表
+#### 5.1.5 代理商表 (agents)
 
 ```sql
 CREATE TABLE agents (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     agent_code VARCHAR(50) UNIQUE NOT NULL,
     agent_name VARCHAR(100) NOT NULL,
-    system_type VARCHAR(20) NOT NULL,
+    system_type VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-#### 4.2.6 software 表
+#### 5.1.6 软件表 (software)
 
 ```sql
 CREATE TABLE software (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) UNIQUE NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-#### 4.2.7 inventories 表
+#### 5.1.7 库存表 (inventory)
 
 ```sql
-CREATE TABLE inventories (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    agent_id INTEGER NOT NULL,
-    software_id INTEGER NOT NULL,
-    quantity INTEGER DEFAULT 0 NOT NULL,
+CREATE TABLE inventory (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    agent_id INT NOT NULL,
+    software_id INT NOT NULL,
+    quantity INT DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE(agent_id, software_id),
     FOREIGN KEY (agent_id) REFERENCES agents(id),
-    FOREIGN KEY (software_id) REFERENCES software(id)
+    FOREIGN KEY (software_id) REFERENCES software(id),
+    UNIQUE KEY (agent_id, software_id)
 );
 ```
 
-#### 4.2.8 purchase_records 表
+#### 5.1.8 采购记录表 (purchase_records)
 
 ```sql
 CREATE TABLE purchase_records (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    agent_id INTEGER NOT NULL,
-    software_id INTEGER NOT NULL,
-    quantity INTEGER NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    agent_id INT NOT NULL,
+    software_id INT NOT NULL,
+    quantity INT NOT NULL,
     purchase_date DATE NOT NULL,
-    operator_id INTEGER NOT NULL,
+    operator_id INT,
     remark TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents(id),
@@ -502,18 +389,18 @@ CREATE TABLE purchase_records (
 );
 ```
 
-#### 4.2.9 installation_records 表
+#### 5.1.9 安装记录表 (installation_records)
 
 ```sql
 CREATE TABLE installation_records (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    agent_id INTEGER NOT NULL,
-    software_id INTEGER NOT NULL,
-    merchant_code VARCHAR(50) NOT NULL,
-    merchant_name VARCHAR(100) NOT NULL,
-    quantity INTEGER NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    agent_id INT NOT NULL,
+    software_id INT NOT NULL,
+    merchant_code VARCHAR(50),
+    merchant_name VARCHAR(100),
+    quantity INT NOT NULL,
     install_date DATE NOT NULL,
-    operator_id INTEGER NOT NULL,
+    operator_id INT,
     remark TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents(id),
@@ -522,17 +409,17 @@ CREATE TABLE installation_records (
 );
 ```
 
-#### 4.2.10 transfer_records 表
+#### 5.1.10 划拨记录表 (transfer_records)
 
 ```sql
 CREATE TABLE transfer_records (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    from_agent_id INTEGER NOT NULL,
-    to_agent_id INTEGER NOT NULL,
-    software_id INTEGER NOT NULL,
-    quantity INTEGER NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    from_agent_id INT NOT NULL,
+    to_agent_id INT NOT NULL,
+    software_id INT NOT NULL,
+    quantity INT NOT NULL,
     transfer_date DATE NOT NULL,
-    operator_id INTEGER NOT NULL,
+    operator_id INT,
     remark TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (from_agent_id) REFERENCES agents(id),
@@ -542,19 +429,19 @@ CREATE TABLE transfer_records (
 );
 ```
 
-#### 4.2.11 inventory_logs 表
+#### 5.1.11 库存变动日志表 (inventory_logs)
 
 ```sql
 CREATE TABLE inventory_logs (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    agent_id INTEGER NOT NULL,
-    software_id INTEGER NOT NULL,
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    agent_id INT NOT NULL,
+    software_id INT NOT NULL,
     change_type VARCHAR(20) NOT NULL,
-    before_qty INTEGER NOT NULL,
-    change_qty INTEGER NOT NULL,
-    after_qty INTEGER NOT NULL,
-    related_id INTEGER,
-    operator_id INTEGER NOT NULL,
+    before_qty INT NOT NULL,
+    change_qty INT NOT NULL,
+    after_qty INT NOT NULL,
+    related_id INT,
+    operator_id INT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (agent_id) REFERENCES agents(id),
     FOREIGN KEY (software_id) REFERENCES software(id),
@@ -562,515 +449,389 @@ CREATE TABLE inventory_logs (
 );
 ```
 
----
+### 5.2 API响应结构
 
-## 5. API接口详细设计
+**通用响应格式**
 
-### 5.1 认证接口
-
-#### 5.1.1 POST /api/v1/auth/login
-
-**请求体**：
 ```json
 {
-    "username": "admin",
-    "password": "123456"
+    "code": 200,
+    "message": "success",
+    "data": {}
 }
 ```
 
-**响应体**：
+**分页响应格式**
+
 ```json
 {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer",
-    "user": {
-        "id": 1,
-        "username": "admin",
-        "full_name": "系统管理员",
-        "role_id": 1,
-        "role_name": "管理员"
+    "code": 200,
+    "message": "success",
+    "data": {
+        "items": [],
+        "total": 100,
+        "page": 1,
+        "size": 10
     }
 }
-```
-
-### 5.2 库存接口
-
-#### 5.2.1 GET /api/v1/inventory/list
-
-**查询参数**：
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| system_type | string | 否 | 代理商所属系统 |
-| agent_code | string | 否 | 代理商编号 |
-| agent_name | string | 否 | 代理商名称 |
-| software_name | string | 否 | 软件名称 |
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "agent": {
-            "id": 1,
-            "agent_code": "000001",
-            "agent_name": "阿灿一代",
-            "system_type": "V3系统"
-        },
-        "software": {
-            "id": 1,
-            "name": "汇客餐饮"
-        },
-        "quantity": 100,
-        "updated_at": "2024-01-01T10:00:00"
-    }
-]
-```
-
-#### 5.2.2 GET /api/v1/inventory/logs
-
-**查询参数**：
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| agent_id | int | 否 | 代理商ID |
-| software_id | int | 否 | 软件ID |
-| change_type | string | 否 | 变动类型 |
-| system_type | string | 否 | 代理商所属系统 |
-| agent_code | string | 否 | 代理商编号 |
-| agent_name | string | 否 | 代理商名称 |
-| software_name | string | 否 | 软件名称 |
-| start_date | string | 否 | 开始日期(YYYY-MM-DD) |
-| end_date | string | 否 | 结束日期(YYYY-MM-DD) |
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "agent": {
-            "id": 1,
-            "agent_code": "000001",
-            "agent_name": "阿灿一代",
-            "system_type": "V3系统"
-        },
-        "software": {
-            "id": 1,
-            "name": "汇客餐饮"
-        },
-        "change_type": "purchase",
-        "before_qty": 0,
-        "change_qty": 100,
-        "after_qty": 100,
-        "related_id": 1,
-        "operator_id": "admin",
-        "created_at": "2024-01-01T10:00:00",
-        "related_system_type": null,
-        "related_agent_code": null,
-        "related_agent_name": null,
-        "merchant_code": null,
-        "merchant_name": null,
-        "remark": null
-    }
-]
-```
-
-### 5.3 业务接口
-
-#### 5.3.1 POST /api/v1/business/purchase
-
-**请求体**：
-```json
-{
-    "system_type": "V3系统",
-    "agent_code": "000001",
-    "agent_name": "阿灿一代",
-    "software_name": "汇客餐饮",
-    "quantity": 100,
-    "purchase_date": "2024-01-01",
-    "remark": "测试采购"
-}
-```
-
-**响应体**：
-```json
-{
-    "message": "采购记录已保存",
-    "id": 1
-}
-```
-
-#### 5.3.2 POST /api/v1/business/install
-
-**请求体**：
-```json
-{
-    "system_type": "V3系统",
-    "agent_code": "000001",
-    "agent_name": "阿灿一代",
-    "software_name": "汇客餐饮",
-    "merchant_code": "M001",
-    "merchant_name": "商户A",
-    "quantity": 10,
-    "install_date": "2024-01-01",
-    "remark": "测试安装"
-}
-```
-
-**响应体**：
-```json
-{
-    "message": "安装记录已保存",
-    "id": 1
-}
-```
-
-#### 5.3.3 POST /api/v1/business/transfer
-
-**请求体**：
-```json
-{
-    "from_system_type": "V3系统",
-    "from_agent_code": "000001",
-    "from_agent_name": "阿灿一代",
-    "to_system_type": "LTB系统",
-    "to_agent_code": "000101",
-    "to_agent_name": "阿灿二代",
-    "software_name": "汇客餐饮",
-    "quantity": 10,
-    "transfer_date": "2024-01-01",
-    "remark": "测试划拨"
-}
-```
-
-**响应体**：
-```json
-{
-    "message": "划拨记录已保存",
-    "id": 1
-}
-```
-
-### 5.4 通用接口
-
-#### 5.4.1 GET /api/v1/common/software
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "name": "汇客餐饮"
-    },
-    {
-        "id": 2,
-        "name": "汇客零售"
-    }
-]
-```
-
-#### 5.4.2 GET /api/v1/common/agents
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "agent_code": "000001",
-        "agent_name": "阿灿一代",
-        "system_type": "V3系统"
-    }
-]
-```
-
-### 5.5 RBAC接口
-
-#### 5.5.1 GET /api/v1/users
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "username": "admin",
-        "full_name": "系统管理员",
-        "role_id": 1,
-        "role_name": "管理员",
-        "is_active": true,
-        "created_at": "2024-01-01T10:00:00"
-    }
-]
-```
-
-#### 5.5.2 POST /api/v1/users
-
-**请求体**：
-```json
-{
-    "username": "user1",
-    "password": "password123",
-    "full_name": "用户1",
-    "role_id": 2
-}
-```
-
-#### 5.5.3 GET /api/v1/roles
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "name": "管理员",
-        "permissions": ["*"]
-    },
-    {
-        "id": 2,
-        "name": "财务",
-        "permissions": ["inventory.view", "purchase.view", "purchase.create"]
-    }
-]
-```
-
-#### 5.5.4 POST /api/v1/roles
-
-**请求体**：
-```json
-{
-    "name": "新角色",
-    "permissions": ["inventory.view"]
-}
-```
-
-### 5.6 数据字典接口
-
-#### 5.6.1 GET /api/v1/dictionary/items
-
-**查询参数**：
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| type_code | string | 否 | 字典类型编码 |
-| item_name | string | 否 | 字典项名称 |
-| item_key | string | 否 | 字典项KEY |
-| status | bool | 否 | 状态 |
-
-**响应体**：
-```json
-[
-    {
-        "id": 1,
-        "type_id": 1,
-        "type_name": "代理商所属系统",
-        "type_code": "SYSTEM_TYPE",
-        "item_key": "V3",
-        "item_value": "V3系统",
-        "item_name": "V3系统",
-        "sort_order": 1,
-        "status": true,
-        "remark": null,
-        "created_at": "2024-01-01T10:00:00"
-    }
-]
-```
-
-#### 5.6.2 POST /api/v1/dictionary/items
-
-**请求体**：
-```json
-{
-    "type_id": 1,
-    "item_key": "NEW_KEY",
-    "item_value": "新值",
-    "item_name": "新名称",
-    "sort_order": 1,
-    "status": true,
-    "remark": "备注"
-}
-```
-
-#### 5.6.3 GET /api/v1/dictionary/by_type/{type_code}
-
-**路径参数**：
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| type_code | string | 字典类型编码 |
-
-**响应体**：
-```json
-[
-    {
-        "item_key": "V3",
-        "item_value": "V3系统",
-        "item_name": "V3系统"
-    },
-    {
-        "item_key": "LTB",
-        "item_value": "LTB系统",
-        "item_name": "LTB系统"
-    }
-]
-```
-
-#### 5.6.4 GET /api/v1/dictionary/items/export
-
-**查询参数**：
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| type_code | string | 否 | 字典类型编码 |
-
-**响应体**：CSV文件流
-
----
-
-## 6. 主业务流程与调用链
-
-### 6.1 采购流程调用链
-
-```
-前端 PurchaseList.tsx
-    │
-    ▼ POST /api/v1/business/purchase
-后端 business.py:create_purchase()
-    │
-    ├─► InventoryService.get_or_create_agent()
-    │       └─► 数据库: SELECT/INSERT agents
-    │
-    ├─► InventoryService.get_or_create_software()
-    │       └─► 数据库: SELECT/INSERT software
-    │
-    ├─► InventoryService.add_purchase()
-    │       └─► 数据库: INSERT purchase_records
-    │
-    ├─► InventoryService.update_inventory()
-    │       └─► 数据库: INSERT/UPDATE inventories
-    │
-    └─► InventoryService.add_inventory_log()
-            └─► 数据库: INSERT inventory_logs
-```
-
-### 6.2 安装流程调用链
-
-```
-前端 InstallList.tsx
-    │
-    ▼ POST /api/v1/business/install
-后端 business.py:create_installation()
-    │
-    ├─► InventoryService.get_or_create_agent()
-    │       └─► 数据库: SELECT/INSERT agents
-    │
-    ├─► InventoryService.get_or_create_software()
-    │       └─► 数据库: SELECT/INSERT software
-    │
-    ├─► InventoryService.add_installation()
-    │       └─► 数据库: INSERT installation_records
-    │
-    ├─► InventoryService.update_inventory() (-quantity)
-    │       └─► 数据库: UPDATE inventories
-    │
-    └─► InventoryService.add_inventory_log()
-            └─► 数据库: INSERT inventory_logs
-```
-
-### 6.3 划拨流程调用链
-
-```
-前端 TransferList.tsx
-    │
-    ▼ POST /api/v1/business/transfer
-后端 business.py:create_transfer()
-    │
-    ├─► InventoryService.get_or_create_agent() [划出方]
-    │       └─► 数据库: SELECT/INSERT agents
-    │
-    ├─► InventoryService.get_or_create_agent() [划入方]
-    │       └─► 数据库: SELECT/INSERT agents
-    │
-    ├─► InventoryService.get_or_create_software()
-    │       └─► 数据库: SELECT/INSERT software
-    │
-    ├─► InventoryService.add_transfer()
-    │       └─► 数据库: INSERT transfer_records
-    │
-    ├─► InventoryService.update_inventory() [划出方, -quantity]
-    │       └─► 数据库: UPDATE inventories
-    │
-    ├─► InventoryService.update_inventory() [划入方, +quantity]
-    │       └─► 数据库: INSERT/UPDATE inventories
-    │
-    ├─► InventoryService.add_inventory_log() [划出记录]
-    │       └─► 数据库: INSERT inventory_logs (transfer_out)
-    │
-    └─► InventoryService.add_inventory_log() [划入记录]
-            └─► 数据库: INSERT inventory_logs (transfer_in)
 ```
 
 ---
 
-## 7. 安全设计
+## 6. API 接口设计
 
-### 7.1 认证机制
+### 6.1 认证接口
 
-- **JWT Token**：使用JSON Web Token进行身份认证
-- **Token有效期**：默认30分钟
-- **密码哈希**：使用bcrypt进行密码加密存储
+| API路径 | HTTP方法 | Controller文件 | 功能描述 |
+|---------|----------|----------------|----------|
+| `/api/v1/auth/login` | POST | `auth.py` | 用户登录 |
+| `/api/v1/auth/logout` | POST | `auth.py` | 用户登出 |
 
-### 7.2 权限控制
+**登录请求**
 
-- **RBAC模型**：基于角色的访问控制
-- **权限验证**：每个API接口都需要验证当前用户是否具有相应权限
-- **权限粒度**：支持到操作级别的权限控制（如 inventory.view, purchase.create）
+```json
+POST /api/v1/auth/login
+{
+    "username": "string",
+    "password": "string"
+}
+```
 
-### 7.3 安全防护
+**登录响应**
 
-- **CORS配置**：允许前端域名访问
-- **请求限制**：可配置请求频率限制
-- **SQL注入防护**：使用ORM参数化查询
-- **XSS防护**：前端使用React自动转义
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "access_token": "string",
+        "token_type": "bearer",
+        "username": "string",
+        "role_name": "string",
+        "permissions": ["string"]
+    }
+}
+```
+
+### 6.2 用户管理接口
+
+| API路径 | HTTP方法 | Controller文件 | 功能描述 |
+|---------|----------|----------------|----------|
+| `/api/v1/users` | GET | `rbac.py` | 获取用户列表 |
+| `/api/v1/users/{user_id}` | GET | `rbac.py` | 获取单个用户 |
+| `/api/v1/users` | POST | `rbac.py` | 创建用户 |
+| `/api/v1/users/{user_id}` | PUT | `rbac.py` | 更新用户 |
+| `/api/v1/users/{user_id}` | DELETE | `rbac.py` | 删除用户 |
+
+**创建用户请求**
+
+```json
+POST /api/v1/users
+{
+    "username": "string",
+    "password": "string",
+    "full_name": "string",
+    "role_id": "integer",
+    "department": "string"
+}
+```
+
+**用户响应**
+
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "id": "integer",
+        "username": "string",
+        "full_name": "string",
+        "role_id": "integer",
+        "role_name": "string",
+        "department": "string",
+        "department_name": "string",
+        "is_active": "boolean",
+        "created_at": "datetime"
+    }
+}
+```
+
+### 6.3 角色管理接口
+
+| API路径 | HTTP方法 | Controller文件 | 功能描述 |
+|---------|----------|----------------|----------|
+| `/api/v1/roles` | GET | `rbac.py` | 获取角色列表 |
+| `/api/v1/roles/{role_id}` | GET | `rbac.py` | 获取单个角色 |
+| `/api/v1/roles` | POST | `rbac.py` | 创建角色 |
+| `/api/v1/roles/{role_id}` | PUT | `rbac.py` | 更新角色 |
+| `/api/v1/roles/{role_id}` | DELETE | `rbac.py` | 删除角色 |
+
+**角色响应**
+
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "id": "integer",
+        "name": "string",
+        "permissions": ["string"],
+        "created_at": "datetime"
+    }
+}
+```
+
+### 6.4 库存管理接口
+
+| API路径 | HTTP方法 | Controller文件 | 功能描述 |
+|---------|----------|----------------|----------|
+| `/api/v1/inventory` | GET | `inventory.py` | 获取库存列表 |
+| `/api/v1/inventory/{inventory_id}` | GET | `inventory.py` | 获取库存详情 |
+
+**库存列表响应**
+
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "items": [
+            {
+                "id": "integer",
+                "agent_code": "string",
+                "agent_name": "string",
+                "system_type": "string",
+                "software_name": "string",
+                "quantity": "integer"
+            }
+        ],
+        "total": "integer"
+    }
+}
+```
+
+### 6.5 业务操作接口
+
+| API路径 | HTTP方法 | Controller文件 | 功能描述 |
+|---------|----------|----------------|----------|
+| `/api/v1/business/purchase` | POST | `business.py` | 新增采购 |
+| `/api/v1/business/purchase/list` | GET | `business.py` | 获取采购记录 |
+| `/api/v1/business/install` | POST | `business.py` | 新增安装 |
+| `/api/v1/business/install/list` | GET | `business.py` | 获取安装记录 |
+| `/api/v1/business/transfer` | POST | `business.py` | 新增划拨 |
+| `/api/v1/business/transfer/list` | GET | `business.py` | 获取划拨记录 |
+| `/api/v1/business/stock-logs` | GET | `business.py` | 获取库存变动日志 |
+
+**采购请求**
+
+```json
+POST /api/v1/business/purchase
+{
+    "agent_id": "integer",
+    "software_id": "integer",
+    "quantity": "integer",
+    "purchase_date": "date",
+    "remark": "string"
+}
+```
+
+### 6.6 数据字典接口
+
+| API路径 | HTTP方法 | Controller文件 | 功能描述 |
+|---------|----------|----------------|----------|
+| `/api/v1/dictionary/types` | GET | `dictionary.py` | 获取字典类型列表 |
+| `/api/v1/dictionary/types` | POST | `dictionary.py` | 创建字典类型 |
+| `/api/v1/dictionary/items` | GET | `dictionary.py` | 获取字典项列表 |
+| `/api/v1/dictionary/items` | POST | `dictionary.py` | 创建字典项 |
+| `/api/v1/dictionary/items/{item_id}` | PUT | `dictionary.py` | 更新字典项 |
+| `/api/v1/dictionary/items/{item_id}` | DELETE | `dictionary.py` | 删除字典项 |
+| `/api/v1/dictionary/items/type/{type_code}` | GET | `dictionary.py` | 根据类型获取字典项 |
+
+---
+
+## 7. 主业务流程与调用链
+
+### 7.1 登录流程
+
+```
+前端 LoginPage ──POST──> /api/v1/auth/login ──> auth.py ──> auth_service.py
+                                                               │
+                                                               ▼
+                                                      验证用户名密码
+                                                               │
+                                                               ▼
+                                                      生成JWT Token
+                                                               │
+                                                               ▼
+                                                         返回用户信息
+```
+
+**调用链**
+
+| 步骤 | 文件 | 方法 | 说明 |
+|------|------|------|------|
+| 1 | `auth.py` | `login()` | 接收登录请求 |
+| 2 | `auth_service.py` | `verify_password()` | 验证密码 |
+| 3 | `auth_service.py` | `create_access_token()` | 生成Token |
+| 4 | `auth.py` | 返回响应 | 返回用户信息和Token |
+
+### 7.2 采购流程
+
+```
+前端 PurchaseList ──POST──> /api/v1/business/purchase ──> business.py
+                                                               │
+                                                               ▼
+                                                     inventory_service.py
+                                                               │
+                                                               ├── 创建采购记录
+                                                               ├── 更新库存(+数量)
+                                                               └── 记录库存变动日志
+```
+
+**调用链**
+
+| 步骤 | 文件 | 方法 | 说明 |
+|------|------|------|------|
+| 1 | `business.py` | `create_purchase()` | 接收采购请求 |
+| 2 | `inventory_service.py` | `purchase()` | 执行采购业务逻辑 |
+| 3 | `models/business.py` | `PurchaseRecord` | 创建采购记录 |
+| 4 | `models/business.py` | `Inventory` | 更新库存数量 |
+| 5 | `models/business.py` | `InventoryLog` | 记录变动日志 |
+
+### 7.3 安装流程
+
+```
+前端 InstallList ──POST──> /api/v1/business/install ──> business.py
+                                                               │
+                                                               ▼
+                                                     inventory_service.py
+                                                               │
+                                                               ├── 验证库存充足
+                                                               ├── 创建安装记录
+                                                               ├── 更新库存(-数量)
+                                                               └── 记录库存变动日志
+```
+
+**调用链**
+
+| 步骤 | 文件 | 方法 | 说明 |
+|------|------|------|------|
+| 1 | `business.py` | `create_installation()` | 接收安装请求 |
+| 2 | `inventory_service.py` | `install()` | 执行安装业务逻辑 |
+| 3 | `models/business.py` | `Inventory` | 验证并更新库存 |
+| 4 | `models/business.py` | `InstallationRecord` | 创建安装记录 |
+| 5 | `models/business.py` | `InventoryLog` | 记录变动日志 |
+
+### 7.4 划拨流程
+
+```
+前端 TransferList ──POST──> /api/v1/business/transfer ──> business.py
+                                                               │
+                                                               ▼
+                                                     inventory_service.py
+                                                               │
+                                                               ├── 验证划出方库存充足
+                                                               ├── 创建划拨记录
+                                                               ├── 更新划出方库存(-数量)
+                                                               ├── 更新划入方库存(+数量)
+                                                               └── 记录双方库存变动日志
+```
+
+**调用链**
+
+| 步骤 | 文件 | 方法 | 说明 |
+|------|------|------|------|
+| 1 | `business.py` | `create_transfer()` | 接收划拨请求 |
+| 2 | `inventory_service.py` | `transfer()` | 执行划拨业务逻辑 |
+| 3 | `models/business.py` | `Inventory` | 验证划出方库存 |
+| 4 | `models/business.py` | `TransferRecord` | 创建划拨记录 |
+| 5 | `models/business.py` | `Inventory` | 更新双方库存 |
+| 6 | `models/business.py` | `InventoryLog` | 记录双方变动日志 |
 
 ---
 
 ## 8. 部署与集成方案
 
-### 8.1 开发环境
+### 8.1 依赖与环境
 
-**后端启动**：
+**后端依赖** (`requirements.txt`)
+
+```txt
+fastapi==0.100.0
+uvicorn==0.23.2
+sqlalchemy==2.0.20
+pydantic==2.4.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+pymysql==1.1.0
+python-dotenv==1.0.0
+```
+
+**前端依赖** (`package.json`)
+
+```json
+{
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.15.0",
+        "antd": "^5.9.0",
+        "axios": "^1.6.0",
+        "@ant-design/icons": "^5.2.6"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.21",
+        "@types/react-dom": "^18.2.7",
+        "@vitejs/plugin-react": "^4.3.1",
+        "typescript": "^5.2.2",
+        "vite": "^6.4.0",
+        "tailwindcss": "^3.3.3",
+        "postcss": "^8.4.29",
+        "autoprefixer": "^10.4.15"
+    }
+}
+```
+
+### 8.2 配置与运行
+
+**后端配置** (`core/config.py`)
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| DATABASE_URL | 数据库连接地址 | mysql+pymysql://user:pass@localhost:3306/db |
+| SECRET_KEY | JWT密钥 | - |
+| ALGORITHM | JWT算法 | HS256 |
+| ACCESS_TOKEN_EXPIRE_MINUTES | Token过期时间(分钟) | 30 |
+
+**启动方式**
+
+**开发环境**
+
 ```bash
+# 后端
 cd backend
 pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
 
-**前端启动**：
-```bash
+# 前端
 cd frontend
 npm install
 npm run dev
 ```
 
-### 8.2 生产环境
+**生产环境**
 
-**后端配置**：
-- 使用Gunicorn作为WSGI服务器
-- 配置环境变量（数据库连接、JWT密钥等）
-- 启用HTTPS
-
-**前端配置**：
-- 构建生产版本：`npm run build`
-- 使用Nginx作为静态文件服务器
-- 配置反向代理到后端API
-
-### 8.3 数据库初始化
-
-**使用SQL文件初始化**：
 ```bash
-mysql -h 192.168.0.118 -P 3306 -u agm -paa111111 < init.sql
-```
-
-**使用Python脚本初始化**：
-```bash
+# 后端
 cd backend
-python scripts/init_database.py
-python scripts/init_users.py
-python scripts/init_dictionary.py
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 前端
+cd frontend
+npm install
+npm run build
 ```
 
 ---
@@ -1079,28 +840,33 @@ python scripts/init_dictionary.py
 
 ### 9.1 注意事项
 
-1. **密码安全**：
-   - 密码必须经过bcrypt哈希后存储
-   - 禁止明文存储密码
-   - 禁止在日志中打印密码
+| 风险类型 | 风险描述 | 关联模块 |
+|----------|----------|----------|
+| 认证绕过 | 未授权访问受保护资源 | auth, deps |
+| SQL注入 | 通过输入注入恶意SQL | 所有数据库操作 |
+| 密码泄露 | 明文存储或传输密码 | auth_service |
+| XSS攻击 | 前端未过滤用户输入 | 前端所有页面 |
+| CSRF攻击 | 跨站请求伪造 | 表单提交接口 |
+| 敏感信息泄露 | 日志或响应中包含敏感数据 | 所有API |
+| 越权访问 | 用户访问非授权数据 | rbac, business |
 
-2. **JWT安全**：
-   - JWT密钥必须安全存储（使用环境变量）
-   - Token必须通过HTTPS传输
-   - 设置合理的Token过期时间
+### 9.2 解决方案
 
-3. **SQL注入防护**：
-   - 所有数据库查询必须使用参数化查询
-   - 禁止拼接SQL语句
+| 风险类型 | 解决方案 | 实施位置 |
+|----------|----------|----------|
+| 认证绕过 | 使用JWT Token验证，依赖注入检查权限 | `api/deps.py` |
+| SQL注入 | 使用SQLAlchemy ORM，禁止拼接SQL | 所有CRUD操作 |
+| 密码泄露 | 使用bcrypt加密存储，HTTPS传输 | `services/auth_service.py` |
+| XSS攻击 | 使用Ant Design自动转义，手动过滤富文本 | 前端组件 |
+| CSRF攻击 | 使用JWT Token认证，无需额外CSRF防护 | 全局 |
+| 敏感信息泄露 | 配置日志脱敏，响应中不返回密码等敏感字段 | `schemas/*`, 日志配置 |
+| 越权访问 | 在Service层验证用户权限，检查数据归属 | `services/*` |
 
-4. **XSS防护**：
-   - 前端使用React自动转义
-   - 对用户输入进行验证和过滤
+**安全配置要点**
 
-5. **权限验证**：
-   - 每个接口都必须验证用户权限
-   - 禁止直接访问未授权的资源
-
-6. **敏感信息保护**：
-   - 禁止在响应中返回敏感信息（如密码哈希）
-   - 日志中禁止记录敏感数据
+1. **JWT密钥管理**: 使用环境变量存储密钥，禁止硬编码
+2. **密码策略**: 强制密码复杂度要求，定期更换密码
+3. **HTTPS**: 生产环境强制使用HTTPS
+4. **输入验证**: 使用Pydantic进行严格的输入验证
+5. **日志审计**: 记录关键操作日志，便于安全审计
+6. **权限最小化**: 遵循最小权限原则，按需分配角色权限

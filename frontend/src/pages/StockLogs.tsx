@@ -124,7 +124,7 @@ const StockLogs: React.FC = () => {
       const queryParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, value);
+          queryParams.append(key, String(value));
         }
       });
       
@@ -157,10 +157,10 @@ const StockLogs: React.FC = () => {
     }
   };
 
-  const columns = [
-    { 
-      title: '变动类型', 
-      dataIndex: 'change_type', 
+  const columns: any = [
+    {
+      title: '变动类型',
+      dataIndex: 'change_type',
       key: 'change_type',
       width: 100,
       render: (type: string) => {
@@ -173,11 +173,11 @@ const StockLogs: React.FC = () => {
         return types[type] || type;
       }
     },
-    { 
-      title: '代理商', 
+    {
+      title: '代理商',
       key: 'agent_info',
       width: 200,
-      render: (_, record: any) => (
+      render: (_: any, record: any) => (
         <div>
           <div><strong>{record.agent?.agent_code}</strong></div>
           <div style={{ fontSize: 12, color: '#666' }}>{record.agent?.agent_name}</div>
@@ -186,12 +186,12 @@ const StockLogs: React.FC = () => {
       )
     },
     { title: '软件', dataIndex: ['software', 'name'], key: 'software_name', width: 100 },
-    { 
-      title: '库存变动', 
+    {
+      title: '库存变动',
       key: 'qty_change',
       width: 180,
-      align: 'center',
-      render: (_, record: any) => (
+      align: 'center' as const,
+      render: (_: any, record: any) => (
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: '#999', fontSize: 12 }}>{record.before_qty}</div>
           <div style={{ fontSize: 16, fontWeight: 'bold', color: record.change_qty > 0 ? '#52c41a' : '#f5222d' }}>
@@ -201,11 +201,11 @@ const StockLogs: React.FC = () => {
         </div>
       )
     },
-    { 
-      title: '关联方', 
+    {
+      title: '关联方',
       key: 'related',
       width: 150,
-      render: (_, record: any) => {
+      render: (_: any, record: any) => {
         if (record.change_type === 'purchase') {
           return <span style={{ color: '#999' }}>采购入库</span>;
         } else if (record.change_type === 'installation') {
@@ -272,14 +272,14 @@ const StockLogs: React.FC = () => {
           <Form.Item name="date_range" label="变动日期区间">
             <RangePicker style={{ width: 250 }} />
           </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">查询</Button>
-              <Button onClick={handleReset}>重置</Button>
-              <Button icon={<DownloadOutlined />} htmlType="button" onClick={handleExport}>导出</Button>
-            </Space>
-          </Form.Item>
         </Form>
+        <div style={{ marginBottom: 20 }}>
+          <Space>
+            <Button type="primary" onClick={() => form.submit()}>查询</Button>
+            <Button onClick={handleReset}>重置</Button>
+            <Button icon={<DownloadOutlined />} htmlType="button" onClick={handleExport}>导出</Button>
+          </Space>
+        </div>
       </div>
       <Table 
         columns={columns} 

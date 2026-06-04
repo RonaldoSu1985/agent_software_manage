@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Form, Input, Select, Button, Space, message, Modal, Tag, Switch } from 'antd';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Table, Form, Input, Select, Button, Space, message, Modal, Switch } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, SyncOutlined, DownloadOutlined } from '@ant-design/icons';
 import api from '../api';
 import dayjs from 'dayjs';
@@ -14,7 +14,24 @@ const DictionaryList: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'add' | 'edit'>('add');
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [dictionaryTypes, setDictionaryTypes] = useState([]);
+  const [dictionaryTypes, setDictionaryTypes] = useState<any[]>([]);
+
+  // 获取用户权限
+  const userPermissions = useMemo(() => {
+    try {
+      const permissionsStr = localStorage.getItem('permissions');
+      return permissionsStr ? JSON.parse(permissionsStr) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // 检查是否有指定权限
+  const hasPermission = (permission: string) => {
+    if (!permission) return true;
+    if (userPermissions.includes('*')) return true;
+    return userPermissions.includes(permission);
+  };
 
   // 获取字典类型列表和初始数据
   useEffect(() => {
@@ -36,7 +53,7 @@ const DictionaryList: React.FC = () => {
     try {
       const params: any = {
         page: 1,
-        page_size: 10
+        page_size: 100
       };
       
       if (values.type_code) params.type_code = values.type_code;
@@ -72,7 +89,7 @@ const DictionaryList: React.FC = () => {
     setModalType('add');
     setSelectedItem(null);
     modalForm.setFieldsValue({
-      type_id: dictionaryTypes[0]?.id,
+      type_id: dictionaryTypes[0]?.id || '',
       item_key: '',
       item_value: '',
       item_name: '',
@@ -174,8 +191,8 @@ const DictionaryList: React.FC = () => {
 
   const columns = [
     { title: '字典编号', dataIndex: 'id', key: 'id', width: 100 },
-    { title: '字典名称', dataIndex: 'item_name', key: 'item_name' },
     { title: '字典类型', dataIndex: 'type_name', key: 'type_name' },
+    { title: '字典名称', dataIndex: 'item_name', key: 'item_name' },
     { title: '字典KEY', dataIndex: 'item_key', key: 'item_key' },
     { title: '字典VALUE', dataIndex: 'item_value', key: 'item_value' },
     {
@@ -204,36 +221,34 @@ const DictionaryList: React.FC = () => {
       title: '操作',
       key: 'action',
       width: 140,
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            修改
-          </Button>
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          >
-            删除
-          </Button>
-        </Space>
+      render: (_: any, record: any) => (
+        <span>
+          {hasPermission('dictionary.edit') && (
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              style={{ marginRight: 8 }}
+            >
+              编辑
+            </Button>
+          )}
+          {hasPermission('dictionary.delete') && (
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+            >
+              删除
+            </Button>
+          )}
+        </span>
       )
     }
   ];
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>数据字典管理</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          新增
-        </Button>
-      </div>
+      <h2 style={{ margin: 0, marginBottom: 16 }}>数据字典管理</h2>
 
       <Form form={form} onFinish={handleSearch} layout="inline" style={{ marginBottom: 16 }}>
         <Form.Item name="item_name">
@@ -257,20 +272,25 @@ const DictionaryList: React.FC = () => {
             <Option value="disabled">禁用</Option>
           </Select>
         </Form.Item>
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-              查询
-            </Button>
-            <Button onClick={handleReset} icon={<SyncOutlined />}>
-              重置
-            </Button>
-            <Button onClick={handleExport} icon={<DownloadOutlined />}>
-              导出
-            </Button>
-          </Space>
-        </Form.Item>
       </Form>
+      <div style={{ marginBottom: 20 }}>
+        <Space>
+          <Button type="primary" onClick={() => form.submit()} icon={<SearchOutlined />}>
+            查询
+          </Button>
+          <Button onClick={handleReset} icon={<SyncOutlined />}>
+            重置
+          </Button>
+          <Button onClick={handleExport} icon={<DownloadOutlined />}>
+            导出
+          </Button>
+          {hasPermission('dictionary.create') && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+              新增
+            </Button>
+          )}
+        </Space>
+      </div>
 
       <Table
         columns={columns}
@@ -279,7 +299,9 @@ const DictionaryList: React.FC = () => {
         rowKey="id"
         pagination={{
           pageSize: 10,
-          showTotal: (total) => `共 ${total} 条`
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showTotal: (total) => `共 ${total} 条`,
         }}
       />
 

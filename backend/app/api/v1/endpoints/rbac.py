@@ -13,18 +13,34 @@ router = APIRouter()
 
 @router.get("/users", response_model=List[UserResponse])
 async def get_users(db: AsyncSession = Depends(get_db), current_user = Depends(get_current_user)):
+    from app.models.dictionary import DictionaryItem, DictionaryType
+    
     result = await db.execute(select(User).options(joinedload(User.role)))
     users = result.scalars().all()
-    return [
-        UserResponse(
+    
+    user_responses = []
+    for user in users:
+        dept_item = None
+        if user.department:
+            dept_result = await db.execute(
+                select(DictionaryItem)
+                .join(DictionaryType)
+                .where(DictionaryItem.item_key == user.department, DictionaryType.type_code == 'DEPARTMENT')
+            )
+            dept_item = dept_result.scalar_one_or_none()
+        
+        user_responses.append(UserResponse(
             id=user.id,
             username=user.username,
             full_name=user.full_name,
             role_id=user.role_id,
             role_name=user.role.name if user.role else "",
-            is_active=user.is_active
-        ) for user in users
-    ]
+            is_active=user.is_active,
+            department=user.department or "",
+            department_name=dept_item.item_value if dept_item else ""
+        ))
+    
+    return user_responses
 
 @router.post("/users", response_model=UserResponse)
 async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db), current_user = Depends(get_current_user)):
@@ -39,20 +55,34 @@ async def create_user(user: UserCreate, db: AsyncSession = Depends(get_db), curr
         hashed_password=hashed_password,
         full_name=user.full_name,
         role_id=user.role_id,
-        is_active=user.is_active
+        is_active=user.is_active,
+        department=user.department
     )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
     
     role = await db.get(Role, user.role_id)
+    
+    from app.models.dictionary import DictionaryItem, DictionaryType
+    dept_item = None
+    if new_user.department:
+        dept_result = await db.execute(
+            select(DictionaryItem)
+            .join(DictionaryType)
+            .where(DictionaryItem.item_key == new_user.department, DictionaryType.type_code == 'DEPARTMENT')
+        )
+        dept_item = dept_result.scalar_one_or_none()
+    
     return UserResponse(
         id=new_user.id,
         username=new_user.username,
         full_name=new_user.full_name,
         role_id=new_user.role_id,
         role_name=role.name if role else "",
-        is_active=new_user.is_active
+        is_active=new_user.is_active,
+        department=new_user.department or "",
+        department_name=dept_item.item_value if dept_item else ""
     )
 
 @router.put("/users/{user_id}", response_model=UserResponse)
@@ -80,17 +110,33 @@ async def update_user(user_id: int, user: UserUpdate, db: AsyncSession = Depends
     if user.is_active is not None:
         db_user.is_active = user.is_active
     
+    if user.department is not None:
+        db_user.department = user.department
+    
     await db.commit()
     await db.refresh(db_user)
     
-    role = await db.get(Role, db_user.role_id)
+    role = await db.get(Role, db_user.role_id) if db_user.role_id else None
+    
+    from app.models.dictionary import DictionaryItem, DictionaryType
+    dept_item = None
+    if db_user.department:
+        result = await db.execute(
+            select(DictionaryItem)
+            .join(DictionaryType)
+            .where(DictionaryItem.item_key == db_user.department, DictionaryType.type_code == 'DEPARTMENT')
+        )
+        dept_item = result.scalar_one_or_none()
+    
     return UserResponse(
         id=db_user.id,
         username=db_user.username,
         full_name=db_user.full_name,
         role_id=db_user.role_id,
         role_name=role.name if role else "",
-        is_active=db_user.is_active
+        is_active=db_user.is_active,
+        department=db_user.department or "",
+        department_name=dept_item.item_value if dept_item else ""
     )
 
 @router.delete("/users/{user_id}")

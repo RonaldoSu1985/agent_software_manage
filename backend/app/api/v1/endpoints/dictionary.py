@@ -152,14 +152,14 @@ async def export_items(
     
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(["字典编号", "字典名称", "字典类型", "字典KEY", "字典VALUE", "状态", "备注", "创建时间"])
+    writer.writerow(["字典编号", "字典类型", "字典名称", "字典KEY", "字典VALUE", "状态", "备注", "创建时间"])
     
     for item in items:
         db_type = await get_dictionary_type(db, item.type_id)
         writer.writerow([
             item.id,
-            item.item_name,
             db_type.type_name if db_type else "",
+            item.item_name,
             item.item_key,
             item.item_value,
             "启用" if item.status else "禁用",

@@ -4,7 +4,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DashboardOutlined,
-  DatabaseOutlined,
   HistoryOutlined,
   LogoutOutlined,
   ShoppingOutlined,

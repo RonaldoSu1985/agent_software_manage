@@ -98,6 +98,56 @@ async def init_dictionary():
             session.add(dict_item)
         await session.commit()
         print("已更新软件名称字典项")
+        
+        # 创建部门字典类型
+        result = await session.execute(
+            select(DictionaryType).filter(DictionaryType.type_code == 'DEPARTMENT')
+        )
+        department_type = result.scalar_one_or_none()
+        
+        if not department_type:
+            department_type = DictionaryType(
+                type_name='部门',
+                type_code='DEPARTMENT',
+                description='部门列表'
+            )
+            session.add(department_type)
+            await session.commit()
+            await session.refresh(department_type)
+            print("已创建部门字典类型")
+        else:
+            print("部门字典类型已存在")
+        
+        # 删除旧的部门字典项
+        await session.execute(
+            delete(DictionaryItem).filter(DictionaryItem.type_id == department_type.id)
+        )
+        await session.commit()
+        
+        # 添加部门字典项
+        department_items = [
+            {'item_key': 'PURCHASE', 'item_value': '采购部', 'item_name': '采购部', 'sort_order': 1},
+            {'item_key': 'FINANCE', 'item_value': '财务部', 'item_name': '财务部', 'sort_order': 2},
+            {'item_key': 'JINHE', 'item_value': '金合部', 'item_name': '金合部', 'sort_order': 3},
+            {'item_key': 'MARKET', 'item_value': '市场品牌部', 'item_name': '市场品牌部', 'sort_order': 4},
+            {'item_key': 'PRODUCT', 'item_value': '产品管理部', 'item_name': '产品管理部', 'sort_order': 5},
+            {'item_key': 'SALES', 'item_value': '销售部', 'item_name': '销售部', 'sort_order': 6},
+            {'item_key': 'SERVICE', 'item_value': '服务部', 'item_name': '服务部', 'sort_order': 7},
+            {'item_key': 'OPERATIONS', 'item_value': '运营部', 'item_name': '运营部', 'sort_order': 8},
+            {'item_key': 'SETTLEMENT', 'item_value': '结算部', 'item_name': '结算部', 'sort_order': 9},
+            {'item_key': 'RISK', 'item_value': '风控部', 'item_name': '风控部', 'sort_order': 10},
+            {'item_key': 'TECH', 'item_value': '技术部', 'item_name': '技术部', 'sort_order': 11},
+            {'item_key': 'TEST', 'item_value': '测试部', 'item_name': '测试部', 'sort_order': 12},
+            {'item_key': 'IT_OPS', 'item_value': '运维部', 'item_name': '运维部', 'sort_order': 13},
+        ]
+        for item in department_items:
+            dict_item = DictionaryItem(
+                type_id=department_type.id,
+                **item
+            )
+            session.add(dict_item)
+        await session.commit()
+        print("已更新部门字典项")
 
 if __name__ == "__main__":
     asyncio.run(init_dictionary())
