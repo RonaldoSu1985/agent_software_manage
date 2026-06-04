@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
@@ -19,13 +19,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
-
 # Serve frontend static files in production
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to Agent Management System API"}
+# Mount static files for assets
+if os.path.exists(frontend_path):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+    app.mount("/favicon.svg", StaticFiles(directory=frontend_path), name="favicon")
+    app.mount("/icons.svg", StaticFiles(directory=frontend_path), name="icons")
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Catch-all route for frontend SPA
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "Not Found"}, 404
