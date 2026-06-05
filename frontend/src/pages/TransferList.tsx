@@ -191,9 +191,11 @@ const TransferList: React.FC = () => {
   ];
 
   const handleShowModal = () => {
+    // 每次打开弹窗时重新从localStorage获取最新的用户名
+    const username = getUsername();
     addForm.setFieldsValue({
       transfer_date: dayjs(),
-      operator: currentUser || 'admin',
+      operator: username,
     });
     setIsModalVisible(true);
   };

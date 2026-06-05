@@ -185,9 +185,11 @@ const InstallList: React.FC = () => {
   ];
 
   const handleShowModal = () => {
+    // 每次打开弹窗时重新从localStorage获取最新的用户名
+    const username = getUsername();
     addForm.setFieldsValue({
       install_date: dayjs(),
-      operator: currentUser || 'admin',
+      operator: username,
     });
     setIsModalVisible(true);
   };

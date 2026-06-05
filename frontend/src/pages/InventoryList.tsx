@@ -146,13 +146,14 @@ const InventoryList: React.FC = () => {
 
   // 打开采购弹窗并自动填入数据
   const handleOpenPurchaseModal = (record: any) => {
+    const username = getUsername();
     purchaseForm.setFieldsValue({
       system_type: record.agent?.system_type || '',
       agent_code: record.agent?.agent_code || '',
       agent_name: record.agent?.agent_name || '',
       software_name: record.software?.name || '',
       purchase_date: dayjs(),
-      operator: currentUser || 'admin',
+      operator: username,
     });
     setIsPurchaseModalVisible(true);
   };
@@ -217,13 +218,14 @@ const InventoryList: React.FC = () => {
 
   // 打开安装弹窗并自动填入数据
   const handleOpenInstallModal = (record: any) => {
+    const username = getUsername();
     installForm.setFieldsValue({
       system_type: record.agent?.system_type || '',
       agent_code: record.agent?.agent_code || '',
       agent_name: record.agent?.agent_name || '',
       software_name: record.software?.name || '',
       install_date: dayjs(),
-      operator: currentUser || 'admin',
+      operator: username,
     });
     setIsInstallModalVisible(true);
   };

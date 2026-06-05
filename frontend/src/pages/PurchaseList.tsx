@@ -56,18 +56,22 @@ const PurchaseList: React.FC = () => {
 
   const getUsername = () => {
     let username = localStorage.getItem('username');
+    console.log('当前localStorage username:', username);
     if (!username) {
       // 从token解析
       const token = localStorage.getItem('token');
+      console.log('当前token:', token ? '存在' : '不存在');
       if (token) {
         try {
           const payload = token.split('.')[1];
           const decoded = JSON.parse(atob(payload));
           username = decoded.sub;
+          console.log('从token解析出username:', username);
           if (username) {
             localStorage.setItem('username', username);
           }
-        } catch {
+        } catch (e) {
+          console.error('token解析失败:', e);
           username = null;
         }
       }
@@ -180,9 +184,11 @@ const PurchaseList: React.FC = () => {
   ];
 
   const handleShowModal = () => {
+    // 每次打开弹窗时重新从localStorage获取最新的用户名
+    const username = getUsername();
     addForm.setFieldsValue({
       purchase_date: dayjs(),
-      operator: currentUser || 'admin',
+      operator: username,
     });
     setIsModalVisible(true);
   };
