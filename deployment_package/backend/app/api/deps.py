@@ -41,7 +41,13 @@ def require_permission(permission: str):
     创建权限检查依赖函数
     permission: 需要的权限，如 "purchase.create", "transfer.create"
     """
-    async def check_permission(current_user: User = Depends(get_current_user)) -> User:
+    async def check_permission(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db)
+    ) -> User:
+        # 显式加载角色关联（解决异步懒加载问题）
+        await db.refresh(current_user, attribute_names=['role'])
+        
         if not current_user.role:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
