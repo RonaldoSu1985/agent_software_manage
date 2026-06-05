@@ -34,3 +34,33 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+def require_permission(permission: str):
+    """
+    创建权限检查依赖函数
+    permission: 需要的权限，如 "purchase.create", "transfer.create"
+    """
+    async def check_permission(current_user: User = Depends(get_current_user)) -> User:
+        if not current_user.role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="用户没有分配角色"
+            )
+        
+        permissions = current_user.role.permissions or []
+        
+        # 如果权限列表包含 '*'，表示拥有所有权限
+        if '*' in permissions:
+            return current_user
+        
+        # 检查是否有所需的权限
+        if permission not in permissions:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"没有权限: {permission}"
+            )
+        
+        return current_user
+    
+    return check_permission
