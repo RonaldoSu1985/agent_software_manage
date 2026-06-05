@@ -61,16 +61,8 @@ const TransferList: React.FC = () => {
     fetchData();
     fetchCommonData();
     
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload));
-        setCurrentUser(decoded.sub || 'admin');
-      } catch {
-        setCurrentUser('admin');
-      }
-    }
+    const username = localStorage.getItem('username');
+    setCurrentUser(username || 'admin');
     
     // 检测URL参数，自动打开新增弹窗
     const params = new URLSearchParams(window.location.search);

@@ -121,16 +121,8 @@ const InventoryList: React.FC = () => {
     fetchData();
     fetchCommonData();
     
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload));
-        setCurrentUser(decoded.sub || 'admin');
-      } catch {
-        setCurrentUser('admin');
-      }
-    }
+    const username = localStorage.getItem('username');
+    setCurrentUser(username || 'admin');
   }, []);
 
   // 打开采购弹窗并自动填入数据
