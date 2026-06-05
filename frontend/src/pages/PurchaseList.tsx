@@ -54,12 +54,32 @@ const PurchaseList: React.FC = () => {
     }
   };
 
+  const getUsername = () => {
+    let username = localStorage.getItem('username');
+    if (!username) {
+      // 从token解析
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = token.split('.')[1];
+          const decoded = JSON.parse(atob(payload));
+          username = decoded.sub;
+          if (username) {
+            localStorage.setItem('username', username);
+          }
+        } catch {
+          username = null;
+        }
+      }
+    }
+    return username || 'admin';
+  };
+
   useEffect(() => {
     fetchData();
     fetchCommonData();
     
-    const username = localStorage.getItem('username');
-    setCurrentUser(username || 'admin');
+    setCurrentUser(getUsername());
     
     // 检测URL参数，自动打开新增弹窗
     const params = new URLSearchParams(window.location.search);

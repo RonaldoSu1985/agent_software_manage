@@ -117,12 +117,31 @@ const InventoryList: React.FC = () => {
     }
   };
 
+  const getUsername = () => {
+    let username = localStorage.getItem('username');
+    if (!username) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = token.split('.')[1];
+          const decoded = JSON.parse(atob(payload));
+          username = decoded.sub;
+          if (username) {
+            localStorage.setItem('username', username);
+          }
+        } catch {
+          username = null;
+        }
+      }
+    }
+    return username || 'admin';
+  };
+
   useEffect(() => {
     fetchData();
     fetchCommonData();
     
-    const username = localStorage.getItem('username');
-    setCurrentUser(username || 'admin');
+    setCurrentUser(getUsername());
   }, []);
 
   // 打开采购弹窗并自动填入数据
