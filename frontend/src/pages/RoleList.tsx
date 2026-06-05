@@ -237,13 +237,73 @@ const RoleList: React.FC = () => {
     form.setFieldsValue({ permissions: newKeys });
   };
 
+  const getGroupKeys = (item: PermissionItem): string[] => {
+    const keys: string[] = [];
+    const traverse = (data: PermissionItem[]) => {
+      data.forEach((child) => {
+        if (child.children) {
+          traverse(child.children);
+        } else {
+          keys.push(child.key);
+        }
+      });
+    };
+    if (item.children) {
+      traverse(item.children);
+    }
+    return keys;
+  };
+
+  const handleGroupCheck = (item: PermissionItem) => {
+    const groupKeys = getGroupKeys(item);
+    let newKeys = [...checkedKeys];
+    
+    // 检查是否已全选该分组
+    const allChecked = groupKeys.every(k => newKeys.includes(k));
+    
+    if (allChecked) {
+      // 取消全选
+      newKeys = newKeys.filter(k => !groupKeys.includes(k));
+    } else {
+      // 全选该分组
+      groupKeys.forEach(k => {
+        if (!newKeys.includes(k)) {
+          newKeys.push(k);
+        }
+      });
+    }
+    
+    // 过滤掉 '*'
+    newKeys = newKeys.filter(k => k !== '*');
+    
+    // 检查是否选中了所有权限
+    const hasAllLeafPermissions = allPermissionKeys.every(k => newKeys.includes(k));
+    if (hasAllLeafPermissions) {
+      newKeys = ['*', ...newKeys];
+    }
+    
+    setCheckedKeys(newKeys);
+    form.setFieldsValue({ permissions: newKeys });
+  };
+
   const renderTree = (data: PermissionItem[], level: number = 0) => {
     return data.map((item) => {
       if (item.children) {
+        const groupKeys = getGroupKeys(item);
+        const allChecked = groupKeys.every(k => checkedKeys.includes(k));
+        const partialChecked = groupKeys.some(k => checkedKeys.includes(k)) && !allChecked;
+        
         return (
           <div key={item.key} style={{ marginBottom: 8 }}>
-            <div style={{ fontWeight: 'bold', marginBottom: 4, paddingLeft: level * 16 }}>
-              {item.title}
+            <div style={{ paddingLeft: level * 16 }}>
+              <Checkbox
+                checked={allChecked}
+                indeterminate={partialChecked}
+                onChange={() => handleGroupCheck(item)}
+                style={{ fontWeight: 'bold' }}
+              >
+                {item.title}
+              </Checkbox>
             </div>
             <div style={{ paddingLeft: 16 }}>
               {renderTree(item.children, level + 1)}
