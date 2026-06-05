@@ -432,6 +432,7 @@ async def list_logs(
     software_name: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
+    operator: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user)
 ):
     stmt = select(InventoryLog, TransferRecord, InstallationRecord, User).options(
@@ -464,6 +465,8 @@ async def list_logs(
         stmt = stmt.where(InventoryLog.created_at >= start_date)
     if end_date:
         stmt = stmt.where(InventoryLog.created_at <= f"{end_date} 23:59:59")
+    if operator:
+        stmt = stmt.where(User.username.like(f"%{operator}%"))
         
     stmt = stmt.order_by(InventoryLog.created_at.desc())
     result = await db.execute(stmt)
