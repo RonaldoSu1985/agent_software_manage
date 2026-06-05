@@ -46,7 +46,7 @@ async def create_purchase(
 async def create_installation(
     payload: InstallationCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_permission("install.create"))
+    current_user: User = Depends(require_permission("installation.create"))
 ):
     try:
         agent = await InventoryService.get_or_create_agent(
