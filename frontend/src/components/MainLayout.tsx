@@ -105,19 +105,19 @@ const MainLayout: React.FC = () => {
       key: '/dictionary',
       icon: <FileOutlined />,
       label: '数据字典',
-      permission: 'dictionary.manage',
+      permission: 'dictionary.view',
     },
     {
       key: '/users',
       icon: <UserOutlined />,
       label: '用户管理',
-      permission: 'user.manage',
+      permission: 'user.view',
     },
     {
       key: '/roles',
       icon: <LockOutlined />,
       label: '角色管理',
-      permission: 'role.manage',
+      permission: 'role.view',
     },
   ];
 
