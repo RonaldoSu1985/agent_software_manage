@@ -6,19 +6,19 @@ echo.
 
 set "BACKEND_DIR=d:\GeminiProject\backend"
 set "FRONTEND_DIR=d:\GeminiProject\frontend"
-set "BACKEND_PORT=8000"
-set "FRONTEND_PORT=5173"
+set "BACKEND_PORT=8001"
+set "FRONTEND_PORT=5175"
 
 echo [1/4] 停止正在运行的服务...
 
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000"') do (
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%BACKEND_PORT%"') do (
     if not "%%a"=="0" (
         taskkill /f /pid %%a >nul 2>&1
         echo       已停止后端服务 (PID: %%a)
     )
 )
 
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5173"') do (
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":%FRONTEND_PORT%"') do (
     if not "%%a"=="0" (
         taskkill /f /pid %%a >nul 2>&1
         echo       已停止前端服务 (PID: %%a)
@@ -35,7 +35,7 @@ timeout /t 3 /nobreak >nul
 
 echo.
 echo [3/4] 启动前端服务...
-start "Frontend - React" /d "%FRONTEND_DIR%" cmd /k "npm run dev -- --host 0.0.0.0"
+start "Frontend - React" /d "%FRONTEND_DIR%" cmd /k "npm run dev -- --host 0.0.0.0 --port %FRONTEND_PORT%"
 
 timeout /t 2 /nobreak >nul
 

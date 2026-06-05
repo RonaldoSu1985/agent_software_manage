@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
     hashed_password VARCHAR(255) NOT NULL COMMENT '加密后的密码',
     full_name VARCHAR(100) COMMENT '姓名',
+    department VARCHAR(50) COMMENT '部门',
     role_id INT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -145,20 +146,19 @@ CREATE TABLE IF NOT EXISTS inventory_logs (
 
 -- Seed Initial Data
 
--- Roles
+-- Roles - 只保留管理员角色
 INSERT INTO roles (name, permissions) VALUES 
-('管理员', '["*"]'), 
-('财务', '["inventory.view", "purchase.view", "purchase.create"]'),
-('业务员', '["inventory.view", "installation.create", "transfer.create"]');
+('管理员', '["*"]');
 
 -- Admin User (Password: 123456)
-INSERT INTO users (username, hashed_password, full_name, role_id) VALUES 
-('admin', '$2b$12$eh7Ktw8MFAhZKTp9mg6WfuWA8JaixLMOL9ZNYZyzVO8o4OAOSLoZm', '系统管理员', 1);
+INSERT INTO users (username, hashed_password, full_name, department, role_id) VALUES 
+('admin', '$2b$12$Q6r//78ftYMOjWW0FlSPq.90rM3djLgJjoF75BNNRGJTEZ5d./TV6', '系统管理员', 'PRODUCT', 1);
 
 -- Dictionary Types
 INSERT INTO dictionary_type (type_name, type_code, description) VALUES 
 ('代理商所属系统', 'SYSTEM_TYPE', '代理商所属系统类型'),
-('软件名称', 'SOFTWARE_NAME', '软件名称列表');
+('软件名称', 'SOFTWARE_NAME', '软件名称列表'),
+('部门', 'DEPARTMENT', '部门列表');
 
 -- Dictionary Items - System Types
 INSERT INTO dictionary_item (type_id, item_key, item_value, item_name, sort_order) VALUES 
@@ -169,6 +169,23 @@ INSERT INTO dictionary_item (type_id, item_key, item_value, item_name, sort_orde
 INSERT INTO dictionary_item (type_id, item_key, item_value, item_name, sort_order) VALUES 
 (2, 'HK_CY', '汇客餐饮', '汇客餐饮', 1),
 (2, 'HK_LS', '汇客零售', '汇客零售', 2);
+
+-- Dictionary Items - Departments
+INSERT INTO dictionary_item (type_id, item_key, item_value, item_name, sort_order) VALUES 
+(3, 'PRODUCT', '产品部', '产品部', 1),
+(3, 'TECH', '技术部', '技术部', 2),
+(3, 'PURCHASE', '采购部', '采购部', 3),
+(3, 'FINANCE', '财务部', '财务部', 4),
+(3, 'SALES', '销售部', '销售部', 5),
+(3, 'MARKETING', '市场部', '市场部', 6),
+(3, 'HR', '人力资源部', '人力资源部', 7),
+(3, 'OPERATIONS', '运营部', '运营部', 8),
+(3, 'CUSTOMER_SERVICE', '客服部', '客服部', 9),
+(3, 'BUSINESS', '业务部', '业务部', 10),
+(3, 'MANAGEMENT', '管理部', '管理部', 11),
+(3, 'AGENT', '代理商部', '代理商部', 12),
+(3, 'SUPPORT', '技术支持部', '技术支持部', 13),
+(3, 'QUALITY', '质量部', '质量部', 14);
 
 -- Software
 INSERT INTO software (name) VALUES ('汇客餐饮'), ('汇客零售');

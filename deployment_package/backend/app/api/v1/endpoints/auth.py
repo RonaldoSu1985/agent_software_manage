@@ -1,23 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from app.models.database import get_db
 from app.models.user import User, Role
-from app.schemas.token import LoginResponse
+from app.schemas.token import LoginResponse, LoginRequest
 from app.services.auth_service import verify_password, create_access_token
 import json
 
 router = APIRouter()
 
 @router.post("/login", response_model=LoginResponse)
-async def login(db: AsyncSession = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    stmt = select(User).options(joinedload(User.role)).where(User.username == form_data.username)
+async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
+    stmt = select(User).options(joinedload(User.role)).where(User.username == login_data.username)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",

@@ -1,8 +1,8 @@
 import requests
 
 # 首先获取token
-login_url = "http://localhost:8000/api/v1/auth/login"
-data_url = "http://localhost:8000/api/v1/dictionary/items"
+login_url = "http://localhost:8001/api/v1/auth/login"
+data_url = "http://localhost:8001/api/v1/dictionary/items"
 
 # 登录
 try:

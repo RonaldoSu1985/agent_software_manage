@@ -9,11 +9,10 @@ const LoginPage: React.FC = () => {
 
   const onFinish = async (values: any) => {
     try {
-      const params = new URLSearchParams();
-      params.append('username', values.username);
-      params.append('password', values.password);
-
-      const response = await api.post('/auth/login', params);
+      const response = await api.post('/auth/login', {
+        username: values.username,
+        password: values.password,
+      });
       const token = response.data.access_token || response.data.token;
       
       if (token) {
