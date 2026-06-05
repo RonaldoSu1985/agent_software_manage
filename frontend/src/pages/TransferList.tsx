@@ -301,8 +301,8 @@ const TransferList: React.FC = () => {
           <Form.Item name="transfer_date" label="划拨日期" rules={[{ required: true, message: '请选择划拨日期' }]}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="operator" label="操作人" rules={[{ required: true, message: '请输入操作人' }]}>
-            <Input placeholder="请输入操作人" />
+          <Form.Item name="operator" label="操作人">
+            <Input placeholder="请输入操作人" disabled defaultValue={currentUser} />
           </Form.Item>
           <Form.Item name="remark" label="备注">
             <Input.TextArea placeholder="请输入备注" />
