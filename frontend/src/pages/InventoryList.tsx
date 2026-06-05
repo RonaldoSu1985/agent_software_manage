@@ -141,7 +141,7 @@ const InventoryList: React.FC = () => {
       agent_name: record.agent?.agent_name || '',
       software_name: record.software?.name || '',
       purchase_date: dayjs(),
-      operator: currentUser,
+      operator: currentUser || 'admin',
     });
     setIsPurchaseModalVisible(true);
   };
@@ -175,7 +175,7 @@ const InventoryList: React.FC = () => {
       from_agent_name: record.agent?.agent_name || '',
       software_name: record.software?.name || '',
       transfer_date: dayjs(),
-      operator: currentUser,
+      operator: currentUser || 'admin',
     });
     setIsTransferModalVisible(true);
   };
@@ -212,7 +212,7 @@ const InventoryList: React.FC = () => {
       agent_name: record.agent?.agent_name || '',
       software_name: record.software?.name || '',
       install_date: dayjs(),
-      operator: currentUser,
+      operator: currentUser || 'admin',
     });
     setIsInstallModalVisible(true);
   };
@@ -370,7 +370,7 @@ const InventoryList: React.FC = () => {
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="operator" label="操作人">
-            <Input placeholder="请输入操作人" disabled defaultValue={currentUser} />
+            <Input placeholder="请输入操作人" disabled />
           </Form.Item>
           <Form.Item name="remark" label="备注">
             <Input.TextArea placeholder="请输入备注" />
@@ -426,7 +426,7 @@ const InventoryList: React.FC = () => {
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="operator" label="操作人">
-            <Input placeholder="请输入操作人" disabled defaultValue={currentUser} />
+            <Input placeholder="请输入操作人" disabled />
           </Form.Item>
           <Form.Item name="remark" label="备注">
             <Input.TextArea placeholder="请输入备注" />
@@ -475,7 +475,7 @@ const InventoryList: React.FC = () => {
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="operator" label="操作人">
-            <Input placeholder="请输入操作人" disabled defaultValue={currentUser} />
+            <Input placeholder="请输入操作人" disabled />
           </Form.Item>
           <Form.Item name="remark" label="备注">
             <Input.TextArea placeholder="请输入备注" />

@@ -182,7 +182,7 @@ const TransferList: React.FC = () => {
   const handleShowModal = () => {
     addForm.setFieldsValue({
       transfer_date: dayjs(),
-      operator: currentUser,
+      operator: currentUser || 'admin',
     });
     setIsModalVisible(true);
   };
@@ -302,7 +302,7 @@ const TransferList: React.FC = () => {
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="operator" label="操作人">
-            <Input placeholder="请输入操作人" disabled defaultValue={currentUser} />
+            <Input placeholder="请输入操作人" disabled />
           </Form.Item>
           <Form.Item name="remark" label="备注">
             <Input.TextArea placeholder="请输入备注" />
