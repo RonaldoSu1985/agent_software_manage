@@ -32,9 +32,10 @@ app.mount("/favicon.svg", StaticFiles(directory=frontend_dir), name="favicon")
 app.mount("/icons.svg", StaticFiles(directory=frontend_dir), name="icons")
 
 # SPA catch-all route - return index.html for all other paths
-@app.route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 async def serve_frontend(request: Request, full_path: str):
     index_path = os.path.join(frontend_dir, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
     return {"detail": "Not Found"}
+
+app.add_api_route("/{full_path:path}", endpoint=serve_frontend, methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
