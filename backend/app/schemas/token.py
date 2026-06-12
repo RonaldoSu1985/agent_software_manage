@@ -12,5 +12,6 @@ class LoginResponse(BaseModel):
     access_token: str
     token_type: str
     username: str
+    full_name: str
     role_name: str
     permissions: List[str]

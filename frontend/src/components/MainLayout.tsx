@@ -42,6 +42,27 @@ const MainLayout: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // 确保用户信息显示正确
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+    const fullName = localStorage.getItem('full_name');
+    
+    // 如果有 token 和 username 但没有 full_name，尝试从 token 解析或保持 username
+    if (token && username && !fullName) {
+      try {
+        const payload = token.split('.')[1];
+        const decoded = JSON.parse(atob(payload));
+        // 如果没有 full_name，至少确保 username 是正确的
+        if (decoded.sub && decoded.sub !== username) {
+          localStorage.setItem('username', decoded.sub);
+        }
+      } catch (e) {
+        console.error('Token 解析失败:', e);
+      }
+    }
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
