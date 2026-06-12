@@ -180,7 +180,7 @@ const MainLayout: React.FC = () => {
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: isMobile ? 12 : 16 }}>
             <span style={{ display: !isMobile ? 'block' : 'none', fontSize: 14 }}>
-              {localStorage.getItem('username')}
+              {localStorage.getItem('full_name') || localStorage.getItem('username')}
             </span>
             <Button
               type="text"

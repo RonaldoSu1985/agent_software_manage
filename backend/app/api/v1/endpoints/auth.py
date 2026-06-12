@@ -57,6 +57,7 @@ async def login(db: AsyncSession = Depends(get_db), form_data: OAuth2PasswordReq
         "access_token": access_token, 
         "token_type": "bearer",
         "username": user.username,
+        "full_name": user.full_name or user.username,
         "role_name": user.role.name if user.role else "",
         "permissions": permissions
     }

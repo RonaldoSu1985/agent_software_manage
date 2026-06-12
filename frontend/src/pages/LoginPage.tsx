@@ -24,13 +24,15 @@ const LoginPage: React.FC = () => {
         localStorage.setItem('token', token);
         // 保存用户信息和权限
         const username = response.data.username || values.username;
+        const fullName = response.data.full_name || response.data.username || values.username;
         localStorage.setItem('username', username);
+        localStorage.setItem('full_name', fullName);
         localStorage.setItem('role_name', response.data.role_name || '');
         localStorage.setItem('permissions', JSON.stringify(response.data.permissions || []));
         message.success('登录成功');
         navigate('/');
       } else {
-        message.error('登录失败：未获取到有效Token');
+        message.error('登录失败：未获取到有效 Token');
       }
     } catch (error: any) {
       console.error('Login error:', error);
