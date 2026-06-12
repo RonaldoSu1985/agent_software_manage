@@ -65,7 +65,15 @@ const UserList: React.FC = () => {
         params: { ...params, _t: Date.now() } 
       });
       console.log('API Response:', response.data);
-      setUsers(response.data);
+      
+      // 确保数据正确，不被其他代码修改
+      const safeUsers = response.data.map((user: any) => ({
+        ...user,
+        username: user.username, // 强制使用 username 字段
+      }));
+      
+      console.log('Safe Users:', safeUsers);
+      setUsers(safeUsers);
     } catch (error) {
       message.error('获取用户列表失败');
     }
