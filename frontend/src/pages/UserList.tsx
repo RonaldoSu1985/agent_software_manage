@@ -60,7 +60,11 @@ const UserList: React.FC = () => {
 
   const fetchUsers = async (params: any = {}) => {
     try {
-      const response = await api.get('/users', { params });
+      // 添加时间戳参数防止缓存
+      const response = await api.get('/users', { 
+        params: { ...params, _t: Date.now() } 
+      });
+      console.log('API Response:', response.data);
       setUsers(response.data);
     } catch (error) {
       message.error('获取用户列表失败');
@@ -147,6 +151,7 @@ const UserList: React.FC = () => {
       title: '用户名',
       dataIndex: 'username',
       key: 'username',
+      render: (_text: string, record: User) => record.username,
     },
     {
       title: '姓名',
