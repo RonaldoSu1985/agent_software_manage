@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Form, Input, Select, Button, Space, message, Modal, DatePicker } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import api from '../api';
 import dayjs from 'dayjs';
 
@@ -8,6 +9,7 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const PurchaseList: React.FC = () => {
+  const location = useLocation();
   const [form] = Form.useForm();
   const [addForm] = Form.useForm();
   const [data, setData] = useState([]);
@@ -85,9 +87,8 @@ const PurchaseList: React.FC = () => {
     
     setCurrentUser(getUsername());
     
-    // 检测URL参数，自动打开新增弹窗
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('add') === 'true') {
+    // 检测路由 state 参数，自动打开新增弹窗
+    if (location.state?.add) {
       handleShowModal();
     }
   }, []);

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Table, Form, Input, Select, Button, Space, message, Modal, DatePicker } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
 
 const InventoryList: React.FC = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [purchaseForm] = Form.useForm();
   const [transferForm] = Form.useForm();
@@ -325,13 +327,13 @@ const InventoryList: React.FC = () => {
           <Button onClick={() => { form.resetFields(); fetchData(); }}>重置</Button>
           <Button htmlType="button" onClick={handleExport}>导出</Button>
           {hasPermission('purchase.create') && (
-            <Button type="primary" onClick={() => window.location.href = '/purchase?add=true'}>代理商采购</Button>
+            <Button type="primary" onClick={() => navigate('/purchase', { state: { add: true } })}>代理商采购</Button>
           )}
           {hasPermission('transfer.create') && (
-            <Button type="primary" onClick={() => window.location.href = '/transfer?add=true'}>代理商间划拨</Button>
+            <Button type="primary" onClick={() => navigate('/transfer', { state: { add: true } })}>代理商间划拨</Button>
           )}
           {hasPermission('installation.create') && (
-            <Button type="primary" onClick={() => window.location.href = '/install?add=true'}>商户安装</Button>
+            <Button type="primary" onClick={() => navigate('/install', { state: { add: true } })}>商户安装</Button>
           )}
         </Space>
       </div>
