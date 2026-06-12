@@ -28,7 +28,6 @@ interface Department {
 
 const UserList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [usersKey, setUsersKey] = useState(0); // 添加一个 key 来强制重新渲染
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -83,7 +82,6 @@ const UserList: React.FC = () => {
       
       console.log('Safe Users:', safeUsers);
       setUsers(safeUsers);
-      setUsersKey(prev => prev + 1); // 更新 key 强制重新渲染
     } catch (error) {
       message.error('获取用户列表失败');
     }
@@ -248,10 +246,10 @@ const UserList: React.FC = () => {
         )}
       </div>
       <Table
-        key={usersKey} // 添加 key 强制重新渲染
+        key={Date.now().toString()} // 使用时间戳作为 key，强制每次都重新渲染
         dataSource={users}
         columns={columns}
-        rowKey="id"
+        rowKey={(_record, index) => `${index}-${Date.now()}`}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
