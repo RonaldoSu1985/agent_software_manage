@@ -23,6 +23,7 @@ class User(Base):
     role_id = Column(Integer, ForeignKey("roles.id"))
     is_active = Column(Boolean, default=True)
     department = Column(String(50))
+    mcp_key = Column(String(100), unique=True, index=True, nullable=True)
     created_at = Column(DateTime, default=func.now())
 
     role = relationship("Role", back_populates="users")

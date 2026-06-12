@@ -4,8 +4,8 @@ echo.
 echo ==================== 项目重启脚本 ====================
 echo.
 
-set "BACKEND_DIR=d:\GeminiProject\backend"
-set "FRONTEND_DIR=d:\GeminiProject\frontend"
+set "BACKEND_DIR=%~dp0backend"
+set "FRONTEND_DIR=%~dp0frontend"
 set "BACKEND_PORT=8001"
 set "FRONTEND_PORT=5175"
 

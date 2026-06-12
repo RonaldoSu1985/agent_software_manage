@@ -13,6 +13,7 @@ import {
   LockOutlined,
   MenuOutlined,
   FileOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 
@@ -106,6 +107,12 @@ const MainLayout: React.FC = () => {
       icon: <FileOutlined />,
       label: '数据字典',
       permission: 'dictionary.view',
+    },
+    {
+      key: '/mcp',
+      icon: <RobotOutlined />,
+      label: 'AI 助手设置',
+      permission: 'mcp.settings',
     },
     {
       key: '/users',

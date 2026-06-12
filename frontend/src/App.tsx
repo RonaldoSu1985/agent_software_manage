@@ -10,6 +10,7 @@ import StockLogs from './pages/StockLogs';
 import UserList from './pages/UserList';
 import RoleList from './pages/RoleList';
 import DictionaryList from './pages/DictionaryList';
+import MCPSettings from './pages/MCPSettings';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
@@ -40,6 +41,7 @@ function App() {
           <Route path="users" element={<UserList />} />
           <Route path="roles" element={<RoleList />} />
           <Route path="dictionary" element={<DictionaryList />} />
+          <Route path="mcp" element={<MCPSettings />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -76,6 +76,7 @@ const permissionTreeData: PermissionItem[] = [
       { title: '角色新增', key: 'role.create' },
       { title: '角色编辑', key: 'role.edit' },
       { title: '角色删除', key: 'role.delete' },
+      { title: 'AI助手设置', key: 'mcp.settings' },
     ],
   },
 ];

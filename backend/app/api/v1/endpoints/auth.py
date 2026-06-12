@@ -7,9 +7,25 @@ from app.models.database import get_db
 from app.models.user import User, Role
 from app.schemas.token import LoginResponse
 from app.services.auth_service import verify_password, create_access_token
+from app.api.deps import get_current_user
 import json
+import uuid
 
 router = APIRouter()
+
+@router.get("/mcp-key")
+async def get_mcp_key(current_user: User = Depends(get_current_user)):
+    return {"mcp_key": current_user.mcp_key}
+
+@router.post("/mcp-key")
+async def generate_mcp_key(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    new_key = str(uuid.uuid4())
+    current_user.mcp_key = new_key
+    await db.commit()
+    return {"mcp_key": new_key}
 
 @router.post("/login", response_model=LoginResponse)
 async def login(db: AsyncSession = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()):

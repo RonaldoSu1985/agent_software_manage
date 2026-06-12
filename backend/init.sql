@@ -172,20 +172,22 @@ INSERT INTO dictionary_item (type_id, item_key, item_value, item_name, sort_orde
 
 -- Dictionary Items - Departments
 INSERT INTO dictionary_item (type_id, item_key, item_value, item_name, sort_order) VALUES 
-(3, 'PRODUCT', '产品部', '产品部', 1),
-(3, 'TECH', '技术部', '技术部', 2),
-(3, 'PURCHASE', '采购部', '采购部', 3),
-(3, 'FINANCE', '财务部', '财务部', 4),
-(3, 'SALES', '销售部', '销售部', 5),
-(3, 'MARKETING', '市场部', '市场部', 6),
-(3, 'HR', '人力资源部', '人力资源部', 7),
-(3, 'OPERATIONS', '运营部', '运营部', 8),
-(3, 'CUSTOMER_SERVICE', '客服部', '客服部', 9),
-(3, 'BUSINESS', '业务部', '业务部', 10),
-(3, 'MANAGEMENT', '管理部', '管理部', 11),
-(3, 'AGENT', '代理商部', '代理商部', 12),
-(3, 'SUPPORT', '技术支持部', '技术支持部', 13),
-(3, 'QUALITY', '质量部', '质量部', 14);
+(3, 'PRODUCT', '产品项目部', '产品项目部', 1),
+(3, 'QUALITY', '测试部', '测试部', 2);
+(3, 'TECH', '技术部', '技术部', 3),
+(3, 'MANAGEMENT', '运维部', '运维部', 4),
+(3, 'OPERATIONS', '运营部', '运营部', 5),
+(3, 'CUSTOMER_SERVICE', '服务部', '服务部', 6),
+(3, 'FINANCE', '财务部', '财务部', 7),
+(3, 'FINANCE', '核算部', '核算部', 8),
+(3, 'PURCHASE', '采购部', '采购部', 9),
+(3, 'PURCHASE', '仓储部', '仓储部', 10),
+(3, 'BUSINESS', '风控部', '风控部', 11),
+(3, 'SUPPORT', '金融合作部', '金融合作部', 12),
+(3, 'SALES', '销售部', '销售部', 13),
+(3, 'MARKETING', '市场品牌部', '市场品牌部', 14),
+(3, 'MARKETING', '创新事业部', '创新事业部', 15),
+(3, 'HR', '人力资源部', '人力资源部', 16),
 
 -- Software
 INSERT INTO software (name) VALUES ('汇客餐饮'), ('汇客零售');

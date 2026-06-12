@@ -10,3 +10,4 @@ python-multipart
 alembic
 pandas
 openpyxl
+mcp

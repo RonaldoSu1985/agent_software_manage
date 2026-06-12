@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, inventory, business, common, rbac, dictionary
+from app.api.v1.endpoints import auth, inventory, business, common, rbac, dictionary, mcp
 
 api_router = APIRouter()
 
@@ -9,3 +9,4 @@ api_router.include_router(business.router, prefix="/business", tags=["business"]
 api_router.include_router(common.router, prefix="/common", tags=["common"])
 api_router.include_router(rbac.router, tags=["rbac"])
 api_router.include_router(dictionary.router, prefix="/dictionary", tags=["dictionary"])
+api_router.mount("/mcp", mcp.mcp_app)

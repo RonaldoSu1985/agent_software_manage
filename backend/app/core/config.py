@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    DATABASE_URL: str = "mysql+aiomysql://agm:aa111111@192.168.0.118:3306/agent_management?charset=utf8mb4"
+    DATABASE_URL: str = "mysql+aiomysql://product:product123@192.168.6.10:37061/agent_management?charset=utf8mb4"
 
     class Config:
         case_sensitive = True

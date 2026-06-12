@@ -126,19 +126,22 @@ async def init_dictionary():
         
         # 添加部门字典项
         department_items = [
-            {'item_key': 'PURCHASE', 'item_value': '采购部', 'item_name': '采购部', 'sort_order': 1},
-            {'item_key': 'FINANCE', 'item_value': '财务部', 'item_name': '财务部', 'sort_order': 2},
-            {'item_key': 'JINHE', 'item_value': '金合部', 'item_name': '金合部', 'sort_order': 3},
-            {'item_key': 'MARKET', 'item_value': '市场品牌部', 'item_name': '市场品牌部', 'sort_order': 4},
-            {'item_key': 'PRODUCT', 'item_value': '产品管理部', 'item_name': '产品管理部', 'sort_order': 5},
-            {'item_key': 'SALES', 'item_value': '销售部', 'item_name': '销售部', 'sort_order': 6},
-            {'item_key': 'SERVICE', 'item_value': '服务部', 'item_name': '服务部', 'sort_order': 7},
-            {'item_key': 'OPERATIONS', 'item_value': '运营部', 'item_name': '运营部', 'sort_order': 8},
-            {'item_key': 'SETTLEMENT', 'item_value': '结算部', 'item_name': '结算部', 'sort_order': 9},
-            {'item_key': 'RISK', 'item_value': '风控部', 'item_name': '风控部', 'sort_order': 10},
-            {'item_key': 'TECH', 'item_value': '技术部', 'item_name': '技术部', 'sort_order': 11},
-            {'item_key': 'TEST', 'item_value': '测试部', 'item_name': '测试部', 'sort_order': 12},
-            {'item_key': 'IT_OPS', 'item_value': '运维部', 'item_name': '运维部', 'sort_order': 13},
+            {'item_key': 'PRODUCT', 'item_value': '产品项目部', 'item_name': '产品项目部', 'sort_order': 1},
+            {'item_key': 'QUALITY', 'item_value': '测试部', 'item_name': '测试部', 'sort_order': 2},
+            {'item_key': 'TECH', 'item_value': '技术部', 'item_name': '技术部', 'sort_order': 3},
+            {'item_key': 'MANAGEMENT', 'item_value': '运维部', 'item_name': '运维部', 'sort_order': 4},
+            {'item_key': 'OPERATIONS', 'item_value': '运营部', 'item_name': '运营部', 'sort_order': 5},
+            {'item_key': 'CUSTOMER_SERVICE', 'item_value': '服务部', 'item_name': '服务部', 'sort_order': 6},
+            {'item_key': 'FINANCE', 'item_value': '财务部', 'item_name': '财务部', 'sort_order': 7},
+            {'item_key': 'FINANCE', 'item_value': '核算部', 'item_name': '核算部', 'sort_order': 8},
+            {'item_key': 'PURCHASE', 'item_value': '采购部', 'item_name': '采购部', 'sort_order': 9},
+            {'item_key': 'PURCHASE', 'item_value': '仓储部', 'item_name': '仓储部', 'sort_order': 10},
+            {'item_key': 'BUSINESS', 'item_value': '风控部', 'item_name': '风控部', 'sort_order': 11},
+            {'item_key': 'SUPPORT', 'item_value': '金融合作部', 'item_name': '金融合作部', 'sort_order': 12},
+            {'item_key': 'SALES', 'item_value': '销售部', 'item_name': '销售部', 'sort_order': 13},
+            {'item_key': 'MARKETING', 'item_value': '市场品牌部', 'item_name': '市场品牌部', 'sort_order': 14},
+            {'item_key': 'MARKETING', 'item_value': '创新事业部', 'item_name': '创新事业部', 'sort_order': 15},
+            {'item_key': 'HR', 'item_value': '人力资源部', 'item_name': '人力资源部', 'sort_order': 16},
         ]
         for item in department_items:
             dict_item = DictionaryItem(

@@ -2,10 +2,10 @@
 import pymysql
 
 DB_CONFIG = {
-    'host': '192.168.0.118',
-    'port': 3306,
-    'user': 'agm',
-    'password': 'aa111111',
+    'host': '192.168.6.10',
+    'port': 37061,
+    'user': 'product',
+    'password': 'product123',
     'database': 'agent_management',
     'charset': 'utf8mb4'
 }
